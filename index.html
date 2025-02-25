@@ -31,6 +31,7 @@
       border-radius: 12px;
       margin-bottom: 30px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      position: relative;
     }
     
     .logo {
@@ -316,12 +317,6 @@
       100% { transform: rotate(360deg); }
     }
     
-    @media (max-width: 768px) {
-      .crypto-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    
     .search-container {
       max-width: 600px;
       margin: 0 auto 20px;
@@ -561,12 +556,518 @@
       color: inherit;
       text-decoration: none;
       font-weight: 600;
-      transition: color 0.5s ease, text-shadow 0.5s ease;
+      transition: color var(--transition-duration) var(--transition-timing), 
+                 text-shadow var(--transition-duration) var(--transition-timing);
     }
     
     .outlaw-link:hover {
       color: #4CAF50;
       text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+    
+    /* Theme Toggle with synchronized transitions */
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 30px;
+      width: 50px;
+      height: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      transform: translateX(0);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transition: transform var(--transition-duration) var(--transition-timing),
+                  background-color var(--transition-duration) var(--transition-timing);
+    }
+    
+    .theme-toggle .sun,
+    .theme-toggle .moon {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+      z-index: 1;
+      transition: color var(--transition-duration) var(--transition-timing);
+    }
+    
+    .theme-toggle .sun {
+      color: #FF9800;
+    }
+    
+    .theme-toggle .moon {
+      color: #5C6BC0;
+    }
+    
+    /* Theme styles */
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333333;
+      --card-bg: white;
+      --card-border: #f0f0f0;
+      --card-shadow: rgba(0,0,0,0.05);
+      --header-bg: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.9) 100%);
+      --header-solid-bg: rgba(255,255,255,0.85); /* Solid color for transition state */
+      --secondary-text: #666;
+      --light-bg: #f9f9f9;
+      --input-border: #eee;
+      --search-shadow: rgba(0, 0, 0, 0.1);
+      --modal-shadow: rgba(0, 0, 0, 0.2);
+      --spinner-border: #f3f3f3;
+      --transition-duration: 0.5s;
+      --transition-timing: ease;
+    }
+    
+    [data-theme="dark"] {
+      --bg-color: #1a1a1a;
+      --text-color: #e6e6e6;
+      --card-bg: #252525;
+      --card-border: #333;
+      --card-shadow: rgba(0,0,0,0.1);
+      --header-bg: linear-gradient(135deg, rgba(40,40,40,0.8) 0%, rgba(30,30,30,0.9) 100%);
+      --header-solid-bg: rgba(35,35,35,0.85); /* Solid color for transition state */
+      --secondary-text: #aaa;
+      --light-bg: #333;
+      --input-border: #444;
+      --search-shadow: rgba(0, 0, 0, 0.3);
+      --modal-shadow: rgba(0, 0, 0, 0.4);
+      --spinner-border: #444;
+    }
+    
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(0, 0, 0, 0.4);
+    }
+    
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(24px);
+      background: #333;
+    }
+    
+    /* Apply theme variables with synchronized transitions */
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    header {
+      background: var(--header-bg);
+      box-shadow: 0 4px 20px var(--card-shadow);
+      transition: box-shadow var(--transition-duration) var(--transition-timing);
+      position: relative;
+    }
+    
+    /* Special header background overlay for smooth transitions */
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--header-solid-bg);
+      opacity: 0;
+      z-index: -1;
+      border-radius: 12px;
+      transition: opacity var(--transition-duration) var(--transition-timing);
+    }
+    
+    /* During theme transition, show the solid background */
+    .theme-transitioning header::before {
+      opacity: 1;
+    }
+    
+    /* Hide the header gradient during transition */
+    .theme-transitioning header {
+      background: none;
+    }
+    
+    /* Special animation for header theme transition - removed as we're using a new approach */
+    @keyframes headerThemeChange {
+      0% {
+        background: var(--header-bg);
+        box-shadow: 0 4px 20px var(--card-shadow);
+        opacity: 0;
+      }
+      1% {
+        opacity: 1;
+      }
+      100% {
+        background: var(--header-bg);
+        box-shadow: 0 4px 20px var(--card-shadow);
+        opacity: 1;
+      }
+    }
+    
+    .subtitle {
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .crypto-card {
+      background: var(--card-bg);
+      box-shadow: 0 4px 20px var(--card-shadow);
+      transition: background-color var(--transition-duration) var(--transition-timing),
+                  box-shadow var(--transition-duration) var(--transition-timing),
+                  transform 0.3s ease;
+    }
+    
+    .card-header {
+      border-bottom: 1px solid var(--card-border);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .crypto-symbol {
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .crypto-icon-fallback {
+      background: var(--light-bg);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .search-input {
+      background-color: var(--card-bg);
+      border-color: var(--input-border);
+      color: var(--text-color);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .search-results, .result-item {
+      background: var(--card-bg);
+      color: var(--text-color);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .result-item:hover {
+      background-color: var(--light-bg);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .result-symbol {
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .stat-label {
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .result-icon-fallback {
+      background: var(--light-bg);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .modal-crypto-card {
+      background: var(--card-bg);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .loading-spinner {
+      border-color: var(--spinner-border);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    .last-updated {
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    footer {
+      border-top: 1px solid var(--card-border);
+      color: var(--secondary-text);
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    /* Animate price updates */
+    .price-update {
+      animation: pulseFade 1.5s ease;
+    }
+    
+    @keyframes pulseFade {
+      0% { opacity: 0.6; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+      .crypto-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 15px;
+      }
+      
+      header {
+        padding: 20px 15px;
+        margin-bottom: 20px;
+      }
+      
+      .logo {
+        font-size: 28px;
+      }
+      
+      .subtitle {
+        font-size: 16px;
+        margin-bottom: 15px;
+      }
+      
+      .telegram-section {
+        padding: 20px 15px;
+        margin: 30px 0;
+      }
+      
+      .telegram-title {
+        font-size: 20px;
+      }
+      
+      .telegram-description {
+        font-size: 14px;
+      }
+      
+      .telegram-button {
+        padding: 10px 20px;
+        font-size: 14px;
+      }
+      
+      .modal-crypto-card {
+        width: 90%;
+        margin: 0 5%;
+      }
+      
+      .modal-crypto-card .card-header {
+        padding: 15px 20px;
+      }
+      
+      .modal-crypto-card .card-body {
+        padding: 15px 20px;
+      }
+      
+      .modal-crypto-card .price {
+        font-size: 24px;
+      }
+      
+      .modal-crypto-card .price-change {
+        font-size: 16px;
+      }
+      
+      .search-container {
+        margin-bottom: 15px;
+      }
+      
+      .search-results.active {
+        max-height: 300px;
+      }
+      
+      /* Improve touch targets for mobile */
+      .search-button {
+        width: 44px;
+        height: 44px;
+      }
+      
+      .result-item {
+        padding: 12px 15px;
+        min-height: 44px;
+      }
+      
+      .refresh-button {
+        padding: 12px 24px;
+        min-height: 44px;
+      }
+      
+      .modal-close {
+        width: 44px;
+        height: 44px;
+        top: 5px;
+        right: 5px;
+      }
+    }
+    
+    /* Small phone optimizations */
+    @media (max-width: 480px) {
+      .logo {
+        font-size: 24px;
+      }
+      
+      .subtitle {
+        font-size: 14px;
+      }
+      
+      .crypto-card {
+        border-radius: 8px;
+      }
+      
+      .card-header {
+        padding: 12px 15px;
+      }
+      
+      .card-body {
+        padding: 15px;
+      }
+      
+      .price {
+        font-size: 20px;
+      }
+      
+      .price-change {
+        font-size: 13px;
+      }
+      
+      .crypto-name {
+        font-size: 16px;
+      }
+      
+      .crypto-symbol {
+        font-size: 12px;
+      }
+      
+      .stat-label {
+        font-size: 11px;
+      }
+      
+      .stat-value {
+        font-size: 13px;
+      }
+      
+      .error-message {
+        font-size: 14px;
+        padding: 12px;
+      }
+      
+      .search-input {
+        font-size: 14px;
+        padding: 12px 44px 12px 15px;
+      }
+      
+      /* Adjust modal for very small screens */
+      .modal-crypto-card .crypto-name {
+        font-size: 18px;
+      }
+      
+      .modal-crypto-card .price {
+        font-size: 22px;
+      }
+      
+      /* Stack telegram button elements if needed */
+      .telegram-button {
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+    }
+    
+    /* Landscape orientation on mobile */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .modal-overlay {
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 20px 0;
+      }
+      
+      .modal-crypto-card {
+        margin: 0 auto;
+      }
+      
+      .search-results.active {
+        max-height: 200px;
+      }
+      
+      .loading {
+        min-height: 200px;
+      }
+    }
+    
+    /* Add safe area insets for modern mobile browsers */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .container {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+      }
+      
+      .modal-overlay {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+    
+    /* Fix for notched displays */
+    @supports(padding: max(0px)) {
+      body {
+        padding-left: min(0px, env(safe-area-inset-left));
+        padding-right: min(0px, env(safe-area-inset-right));
+      }
+    }
+    
+    /* Improve touch feedback for mobile */
+    @media (hover: none) {
+      .result-item:active, 
+      .crypto-name-link:active,
+      .telegram-button:active,
+      .refresh-button:active,
+      .search-button:active {
+        opacity: 0.7;
+      }
+      
+      /* Remove hover effects that don't work well on touch */
+      .crypto-card:hover {
+        transform: none;
+      }
+      
+      /* Disable hover animations and replace with active state */
+      .crypto-name-link:hover::after {
+        transform: none;
+      }
+      
+      .crypto-name-link:active::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+      }
+    }
+    
+    /* Theme transitioning helper class */
+    .theme-transitioning {
+      pointer-events: none; /* Prevent interaction during transition */
+    }
+    
+    /* Specific direction transitions for finer control */
+    .theme-transitioning-to-dark header::before,
+    .theme-transitioning-to-light header::before {
+      opacity: 1;
+    }
+    
+    /* CSS for smooth theme transition debugging - can be removed in production */
+    .theme-transitioning * {
+      /* Forces a repaint which can help with transition synchronization */
+      transform: translateZ(0);
+    }
+    
+    /* Ensure header children also have proper transitions */
+    header *, .logo, .subtitle {
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+    
+    /* Special transition for gradient text (logo) */
+    .logo, .footer-logo {
+      transition: -webkit-text-fill-color var(--transition-duration) var(--transition-timing);
     }
   </style>
 </head>
@@ -577,6 +1078,14 @@
       <div class="subtitle">
         Brought to you by <a href="https://github.com/RGB-Outl4w" class="outlaw-link" target="_blank" rel="noopener noreferrer">OutlawRGB</a>
       </div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <svg class="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-12a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-1 0v2a.5.5 0 0 0 .5.5zm0 14a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 1 0v-2a.5.5 0 0 0-.5-.5zm7-7a.5.5 0 0 0-.5.5h2a.5.5 0 0 0 0-1h-2a.5.5 0 0 0 .5.5zm-13.657-5.657a.5.5 0 0 0 .707 0l1.414-1.414a.5.5 0 1 0-.707-.707l-1.414 1.414a.5.5 0 0 0 0 .707zM7.343 17.657a.5.5 0 0 0-.707 0l-1.414 1.414a.5.5 0 0 0 .707.707l1.414-1.414a.5.5 0 0 0 0-.707zM17.657 17.657a.5.5 0 0 0 0-.707l1.414 1.414a.5.5 0 0 0 .707-.707l-1.414-1.414a.5.5 0 0 0-.707 0zM7.343 6.343a.5.5 0 0 0 0 .707L5.929 5.636a.5.5 0 0 0-.707.707l1.414 1.414a.5.5 0 0 0 .707 0z"/>
+        </svg>
+        <svg class="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
+      </button>
     </header>
     
     <div class="search-container">
@@ -595,10 +1104,6 @@
     <div class="last-updated" id="lastUpdated">
       Last updated: Loading...
     </div>
-    
-    <button class="refresh-button" id="refreshButton" onclick="fetchCryptoPrices()">
-      Refresh Prices
-    </button>
     
     <div id="loadingContainer" class="loading">
       <div class="loading-spinner"></div>
@@ -639,6 +1144,62 @@
 
     // Store all cryptocurrency data fetched from API for search functionality
     let allCryptoData = [];
+    
+    // Auto refresh timer
+    let autoRefreshTimer = null;
+    
+    // Store the currently changed prices for animation
+    let changedPrices = {};
+
+    /**
+     * Theme management system
+     * Handles toggling between light and dark themes with localStorage persistence
+     * and synchronized transitions
+     */
+    const themeManager = {
+      init: function() {
+        // Set initial theme based on localStorage or system preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        } else {
+          // Check system preference
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (prefersDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        }
+        
+        // Add theme toggle event listener - handled in DOMContentLoaded now
+        // for better synchronization
+        
+        // Listen for system preference changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          // Only update if user hasn't manually set a preference
+          if (!localStorage.getItem('theme')) {
+            // Add transitioning class for smooth change
+            document.documentElement.classList.add('theme-transitioning');
+            
+            setTimeout(() => {
+              document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }, 50);
+            
+            // Remove transitioning class after transition completes
+            setTimeout(() => {
+              document.documentElement.classList.remove('theme-transitioning');
+            }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000 + 50);
+          }
+        });
+      },
+      
+      toggleTheme: function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      }
+    };
 
     /**
      * API response cache system
@@ -877,17 +1438,27 @@
      * Handles API requests, caching, and fallback strategies
      */
     async function fetchCryptoPrices() {
-      const refreshButton = document.getElementById('refreshButton');
       const loadingContainer = document.getElementById('loadingContainer');
       const errorContainer = document.getElementById('errorContainer');
       const cryptoGrid = document.getElementById('cryptoGrid');
       
-      // Update UI to loading state
-      refreshButton.textContent = 'Fetching...';
-      refreshButton.disabled = true;
-      loadingContainer.style.display = 'flex';
+      // Only show loading if grid is not already displayed
+      if (cryptoGrid.style.display !== 'grid') {
+        loadingContainer.style.display = 'flex';
+      }
+      
       errorContainer.style.display = 'none';
-      cryptoGrid.style.display = 'none';
+      
+      // Store previous data for animation comparison
+      changedPrices = {};
+      if (allCryptoData.length > 0) {
+        allCryptoData.forEach(crypto => {
+          changedPrices[crypto.id] = {
+            price: crypto.current_price,
+            change: crypto.price_change_percentage_24h
+          };
+        });
+      }
       
       // Check for cached data first
       const cacheKey = `markets_${cryptoIds.join('_')}`;
@@ -895,22 +1466,23 @@
       
       if (cachedData) {
         console.log('Using cached data');
-        allCryptoData = cachedData;
         
         // Update the last updated timestamp
         const now = new Date();
         document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleString()} (cached)`;
         
+        // Only animate if we had previous data
+        const shouldAnimate = allCryptoData.length > 0;
+        
+        // Update our global data
+        allCryptoData = cachedData;
+        
         // Process and display the data
-        renderCryptoCards(cachedData);
+        renderCryptoCards(cachedData, shouldAnimate);
         
         // Show the grid and hide loading
         loadingContainer.style.display = 'none';
         cryptoGrid.style.display = 'grid';
-        
-        // Reset button state
-        refreshButton.textContent = 'Refresh Prices';
-        refreshButton.disabled = false;
         
         return;
       }
@@ -931,6 +1503,9 @@
             }),
             // Success handler
             (data) => {
+              // Only animate if we had previous data
+              const shouldAnimate = allCryptoData.length > 0;
+              
               // Store the data in our global variable for search functionality
               allCryptoData = data;
               
@@ -942,7 +1517,7 @@
               document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleString()}`;
               
               // Process and display the data
-              renderCryptoCards(data);
+              renderCryptoCards(data, shouldAnimate);
               
               // Show the grid and hide loading
               loadingContainer.style.display = 'none';
@@ -990,7 +1565,7 @@
               `;
               
               // Use fallback data
-              renderCryptoCards(fallbackData);
+              renderCryptoCards(fallbackData, false);
               
               loadingContainer.style.display = 'none';
               errorContainer.style.display = 'block';
@@ -1003,18 +1578,36 @@
       } catch (error) {
         console.error('Error in fetch flow:', error);
       } finally {
-        // Reset button state
-        refreshButton.textContent = 'Refresh Prices';
-        refreshButton.disabled = false;
+        // Schedule next auto-refresh (every 5 minutes)
+        scheduleNextRefresh();
       }
+    }
+    
+    /**
+     * Schedule the next automatic refresh
+     * Handles clearing existing timers and setting up new ones
+     */
+    function scheduleNextRefresh() {
+      // Clear any existing timer
+      if (autoRefreshTimer) {
+        clearTimeout(autoRefreshTimer);
+      }
+      
+      // Set next refresh for 5 minutes (300000 ms)
+      autoRefreshTimer = setTimeout(() => {
+        fetchCryptoPrices();
+      }, 300000);
+      
+      console.log('Scheduled next auto-refresh for 5 minutes from now');
     }
 
     /**
      * Render cryptocurrency cards with data
      * Creates HTML elements for each crypto and adds them to the grid
      * @param {Array} cryptoData - Array of cryptocurrency data objects
+     * @param {boolean} animate - Whether to animate changes
      */
-    function renderCryptoCards(cryptoData) {
+    function renderCryptoCards(cryptoData, animate = false) {
       const grid = document.getElementById('cryptoGrid');
       grid.innerHTML = '';
       
@@ -1031,6 +1624,30 @@
         
         // Create the URL for the coin on CoinGecko
         const coinUrl = `https://www.coingecko.com/en/coins/${crypto.id}`;
+        
+        // Check if price has changed for animation
+        let priceChanged = false;
+        let changeDirection = '';
+        
+        if (animate && changedPrices[crypto.id]) {
+          const oldPrice = changedPrices[crypto.id].price;
+          const oldChange = changedPrices[crypto.id].change;
+          
+          // Only animate meaningful changes
+          if (typeof oldPrice === 'number' && typeof crypto.current_price === 'number') {
+            if (Math.abs(oldPrice - crypto.current_price) / oldPrice > 0.0001) {
+              priceChanged = true;
+              changeDirection = crypto.current_price > oldPrice ? 'increase' : 'decrease';
+            }
+          }
+          
+          // Also detect significant change in the 24h percentage
+          if (typeof oldChange === 'number' && typeof crypto.price_change_percentage_24h === 'number') {
+            if (Math.abs(oldChange - crypto.price_change_percentage_24h) > 0.1) {
+              priceChanged = true;
+            }
+          }
+        }
         
         cardElement.innerHTML = `
           <div class="card-header">
@@ -1050,8 +1667,8 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="price">$${formatPrice(crypto.current_price)}</div>
-            <div class="price-change ${isPositive ? 'positive' : 'negative'}">
+            <div class="price ${priceChanged ? 'price-update' : ''}" data-change="${changeDirection}">$${formatPrice(crypto.current_price)}</div>
+            <div class="price-change ${isPositive ? 'positive' : 'negative'} ${priceChanged ? 'price-update' : ''}">
               ${isPositive ? '↑' : '↓'} ${Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
             </div>
             <div class="stats">
@@ -1078,6 +1695,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize cache from localStorage
       apiCache.init();
+      
+      // Initialize theme manager
+      themeManager.init();
       
       const searchInput = document.getElementById('cryptoSearch');
       const searchResults = document.getElementById('searchResults');
@@ -1121,7 +1741,53 @@
         }
       });
       
-      // Fetch cryptocurrency data on page load
+      // Enhanced theme toggling with better synchronization
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+          // Remove any existing animation that might still be running
+          document.querySelectorAll('.theme-transitioning').forEach(el => {
+            el.classList.remove('theme-transitioning');
+          });
+          
+          // Get current theme to determine transition direction
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+          
+          // Add transitioning-to class to help with specific transitions
+          document.documentElement.classList.add(`theme-transitioning-to-${newTheme}`);
+          
+          // Add a special class to help with transition synchronization
+          document.documentElement.classList.add('theme-transitioning');
+          
+          // For the header, apply special handling
+          const header = document.querySelector('header');
+          if (header) {
+            // Temporarily force the header to use solid background color during transition
+            header.style.background = 'none';
+          }
+          
+          // Delay the actual theme change slightly to ensure all elements are ready to transition
+          setTimeout(() => {
+            themeManager.toggleTheme();
+          }, 50);
+          
+          // Remove the transition classes when transitions are likely complete
+          const transitionDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000 + 50;
+          
+          setTimeout(() => {
+            document.documentElement.classList.remove('theme-transitioning');
+            document.documentElement.classList.remove(`theme-transitioning-to-${newTheme}`);
+            
+            // Restore header background
+            if (header) {
+              header.style.background = '';
+            }
+          }, transitionDuration);
+        });
+      }
+      
+      // Initial fetch and auto-refresh setup
       fetchCryptoPrices();
     });
 
