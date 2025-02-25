@@ -80,13 +80,29 @@
       border-bottom: 1px solid #f0f0f0;
     }
     
+    /* Styling for crypto icons */
     .crypto-icon {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background-position: center;
+      background-color: #f9f9f9;
       background-size: cover;
-      background-repeat: no-repeat;
+      background-position: center;
+      margin-right: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    /* New style for direct img tags inside crypto-icon */
+    .crypto-icon img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
     }
     
     .crypto-icon-fallback {
@@ -414,11 +430,13 @@
       background-color: #f9f9f9;
     }
     
+    /* Styles for result icons in search */
     .result-icon {
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      margin-right: 10px;
+      margin-right: 8px;
+      object-fit: cover;
     }
     
     .result-icon-fallback {
@@ -1711,9 +1729,12 @@
         cardElement.innerHTML = `
           <div class="card-header">
             ${crypto.image ? 
-              `<div class="crypto-icon" style="background-image: url('${crypto.image}')"></div>` : 
+              `<div class="crypto-icon">
+                 <img src="${crypto.image}" alt="${crypto.name}" 
+                      onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='${crypto.symbol.charAt(0).toUpperCase()}';">
+               </div>` : 
               `<div class="crypto-icon-fallback" style="background-color: #${Math.floor(Math.random()*16777215).toString(16)}">
-                ${displayInfo.symbol.charAt(0)}
+                ${crypto.symbol.charAt(0).toUpperCase()}
               </div>`
             }
             <div class="crypto-title">
@@ -1907,7 +1928,8 @@
           id: crypto.id,
           name: crypto.name,
           symbol: crypto.symbol,
-          image: `https://assets.coingecko.com/coins/images/1/small/${crypto.id}.png`,
+          // Fix the image URL to use a more accurate format with the correct ID
+          image: `https://assets.coingecko.com/coins/images/${getCoinImageId(crypto.id)}/small/${crypto.id}.png`,
           current_price: crypto.price,
           price_change_percentage_24h: crypto.change,
           total_volume: 1000000000,
@@ -2205,7 +2227,7 @@
                     id: crypto.id,
                     name: crypto.name,
                     symbol: crypto.symbol,
-                    image: `https://assets.coingecko.com/coins/images/1/small/${crypto.id}.png`,
+                    image: `https://assets.coingecko.com/coins/images/${getCoinImageId(crypto.id)}/small/${crypto.id}.png`,
                     current_price: crypto.price,
                     price_change_percentage_24h: crypto.change,
                     total_volume: 1000000000,
@@ -2253,12 +2275,22 @@
         const resultItem = document.createElement('div');
         resultItem.className = 'result-item';
         
-        // Create icon
+        // Create icon with error handling
+        const backgroundColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
         let iconHTML = '';
+        
         if (crypto.image) {
-          iconHTML = `<img src="${crypto.image}" class="result-icon" alt="${crypto.name}">`;
+          // Create image with fallback
+          iconHTML = `
+            <img 
+              src="${crypto.image}" 
+              class="result-icon" 
+              alt="${crypto.name}" 
+              onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='<div class=\\'result-icon-fallback\\' style=\\'background-color: ${backgroundColor}\\'>${crypto.symbol.charAt(0).toUpperCase()}</div>';"
+            >
+          `;
         } else {
-          const backgroundColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+          // Fallback icon using first letter of symbol
           iconHTML = `
             <div class="result-icon-fallback" style="background-color: ${backgroundColor}">
               ${crypto.symbol.charAt(0).toUpperCase()}
@@ -2339,7 +2371,10 @@
         </button>
         <div class="card-header">
           ${crypto.image ? 
-            `<div class="crypto-icon" style="background-image: url('${crypto.image}')"></div>` : 
+            `<div class="crypto-icon">
+               <img src="${crypto.image}" alt="${crypto.name}" 
+                    onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='${crypto.symbol.charAt(0).toUpperCase()}';">
+             </div>` : 
             `<div class="crypto-icon-fallback" style="background-color: #${Math.floor(Math.random()*16777215).toString(16)}">
               ${crypto.symbol.charAt(0).toUpperCase()}
             </div>`
@@ -2414,6 +2449,30 @@
           document.body.removeChild(modalOverlay);
         }
       }, 300);
+    }
+    
+    /**
+     * Helper function to get the correct image ID for popular cryptocurrencies
+     * Maps cryptocurrency IDs to their CoinGecko image IDs
+     * @param {string} coinId - The cryptocurrency ID
+     * @returns {number} - The corresponding image ID for CoinGecko URLs
+     */
+    function getCoinImageId(coinId) {
+      // Common coin mappings based on CoinGecko's image repository
+      const coinImageMap = {
+        'bitcoin': 1,
+        'ethereum': 279,
+        'tether': 325,
+        'binancecoin': 825,
+        'ripple': 44,
+        'dogecoin': 5,
+        'cardano': 2010,
+        'solana': 4128,
+        'polkadot': 12171,
+        'the-open-network': 16638
+      };
+      
+      return coinImageMap[coinId] || 1; // Default to 1 if not found
     }
   </script>
 </body>
