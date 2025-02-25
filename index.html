@@ -821,6 +821,26 @@
       header {
         padding: 20px 15px;
         margin-bottom: 20px;
+        /* Add padding-top to create space for the theme toggle */
+        padding-top: 60px;
+        position: relative;
+      }
+      
+      /* Reposition theme toggle on mobile */
+      .theme-toggle {
+        top: 15px;
+        right: 50%;
+        transform: translateX(50%);
+        /* Enhance visibility with better contrast */
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 5;
+      }
+      
+      /* Dark theme toggle styling for mobile */
+      [data-theme="dark"] .theme-toggle {
+        background: rgba(40, 40, 40, 0.8);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
       
       .logo {
@@ -973,6 +993,17 @@
         padding: 10px 15px;
         font-size: 13px;
       }
+      
+      /* Make the theme toggle slightly smaller on very small screens */
+      .theme-toggle {
+        width: 45px;
+        height: 24px;
+      }
+      
+      .theme-toggle::before {
+        width: 18px;
+        height: 18px;
+      }
     }
     
     /* Landscape orientation on mobile */
@@ -1068,6 +1099,20 @@
     /* Special transition for gradient text (logo) */
     .logo, .footer-logo {
       transition: -webkit-text-fill-color var(--transition-duration) var(--transition-timing);
+    }
+    
+    /* CSS for theme toggle mobile animation */
+    @keyframes pulseToggle {
+      0% { transform: translateX(50%) scale(1); }
+      50% { transform: translateX(50%) scale(1.05); }
+      100% { transform: translateX(50%) scale(1); }
+    }
+    
+    /* Apply animation for mobile only */
+    @media (max-width: 768px) {
+      .theme-toggle {
+        animation: pulseToggle 2s ease-in-out 1;
+      }
     }
   </style>
 </head>
