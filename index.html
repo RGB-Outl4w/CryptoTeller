@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGB | Crypto Price Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    body {
+      background-color: #ffffff;
+      color: #333333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      padding: 30px 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.9) 100%);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .logo {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 5px;
+      background: linear-gradient(90deg, #ff5e62, #4CAF50, #2196f3);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    
+    .crypto-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .crypto-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .crypto-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .crypto-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+    
+    .crypto-icon-fallback {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .crypto-title {
+      flex: 1;
+    }
+    
+    .crypto-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .crypto-name-link {
+      color: inherit;
+      text-decoration: none;
+      position: relative;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .crypto-name-link:hover {
+      color: #2196f3;
+      text-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
+      transform: translateY(-1px);
+    }
+    
+    .crypto-name-link::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: #2196f3;
+      transform: scaleX(0);
+      transform-origin: bottom right;
+      transition: transform 0.3s ease;
+    }
+    
+    .crypto-name-link:hover::after {
+      transform: scaleX(1);
+      transform-origin: bottom left;
+    }
+    
+    .modal-crypto-card .crypto-name-link {
+      font-size: 22px;
+    }
+    
+    .crypto-symbol {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    .price {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    
+    .price-change {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .positive {
+      color: #4CAF50;
+    }
+    
+    .negative {
+      color: #ff5e62;
+    }
+    
+    .stats {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .stat-item {
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .telegram-section {
+      text-align: center;
+      margin: 40px 0;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(255,94,98,0.05) 0%, rgba(76,175,80,0.05) 50%, rgba(33,150,243,0.05) 100%);
+      border-radius: 12px;
+    }
+    
+    .telegram-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .telegram-description {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      color: #666;
+    }
+    
+    .telegram-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #ff5e62, #4CAF50, #2196f3);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .telegram-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(33,150,243,0.3);
+    }
+    
+    .telegram-icon {
+      width: 24px;
+      height: 24px;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #666;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .footer-logo {
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff5e62, #4CAF50, #2196f3);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+    
+    .refresh-button {
+      display: block;
+      margin: 0 auto 30px;
+      background: white;
+      border: 1px solid #eee;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .refresh-button:hover {
+      background: #f9f9f9;
+      color: #333;
+    }
+    
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #2196f3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    .error-message {
+      text-align: center;
+      color: #ff5e62;
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ff5e62;
+      border-radius: 8px;
+      background-color: rgba(255, 94, 98, 0.05);
+    }
+    
+    .last-updated {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+      .crypto-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .search-container {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      position: relative;
+    }
+    
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 45px 12px 15px;
+      border: 1px solid #eee;
+      border-radius: 30px;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+      border-color: #2196f3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+    
+    .search-button {
+      position: absolute;
+      right: 5px;
+      height: 36px;
+      width: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+    
+    .search-button:hover {
+      color: #2196f3;
+      background: rgba(33, 150, 243, 0.1);
+    }
+    
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    
+    .search-results.active {
+      max-height: 400px;
+      padding: 10px 0;
+      overflow-y: auto;
+    }
+    
+    .search-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+    
+    .search-loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2196f3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+    
+    .result-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .result-item:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .result-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    
+    .result-icon-fallback {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+    
+    .result-info {
+      flex: 1;
+    }
+    
+    .result-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .result-symbol {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-crypto-card {
+      max-width: 500px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    
+    .modal-overlay.active .modal-crypto-card {
+      transform: scale(1);
+    }
+    
+    .modal-crypto-card .card-header {
+      padding: 20px 25px;
+    }
+    
+    .modal-crypto-card .crypto-icon,
+    .modal-crypto-card .crypto-icon-fallback {
+      width: 48px;
+      height: 48px;
+    }
+    
+    .modal-crypto-card .crypto-name {
+      font-size: 22px;
+    }
+    
+    .modal-crypto-card .crypto-symbol {
+      font-size: 16px;
+    }
+    
+    .modal-crypto-card .card-body {
+      padding: 25px;
+    }
+    
+    .modal-crypto-card .price {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+    
+    .modal-crypto-card .price-change {
+      font-size: 18px;
+    }
+    
+    .modal-crypto-card .stats {
+      margin-top: 20px;
+    }
+    
+    .modal-crypto-card .stat-label {
+      font-size: 14px;
+    }
+    
+    .modal-crypto-card .stat-value {
+      font-size: 18px;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-close:hover {
+      background: rgba(255, 94, 98, 0.1);
+      color: #ff5e62;
+    }
+    
+    /* OutlawRGB link styling */
+    .outlaw-link {
+      display: inline-block;
+      color: inherit;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.5s ease, text-shadow 0.5s ease;
+    }
+    
+    .outlaw-link:hover {
+      color: #4CAF50;
+      text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">Real-time Cryptocurrency Price Tracker</div>
+      <div class="subtitle">
+        Brought to you by <a href="https://github.com/RGB-Outl4w" class="outlaw-link" target="_blank" rel="noopener noreferrer">OutlawRGB</a>
+      </div>
+    </header>
+    
+    <div class="search-container">
+      <div class="search-wrapper">
+        <input type="text" id="cryptoSearch" class="search-input" placeholder="Search cryptocurrency by name or symbol...">
+        <button class="search-button" id="searchButton" title="Search cryptocurrency">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    
+    <div class="last-updated" id="lastUpdated">
+      Last updated: Loading...
+    </div>
+    
+    <button class="refresh-button" id="refreshButton" onclick="fetchCryptoPrices()">
+      Refresh Prices
+    </button>
+    
+    <div id="loadingContainer" class="loading">
+      <div class="loading-spinner"></div>
+      <div>Loading cryptocurrency data...</div>
+    </div>
+    
+    <div id="errorContainer" style="display: none;"></div>
+    
+    <div class="crypto-grid" id="cryptoGrid" style="display: none;">
+      <!-- Crypto cards will be dynamically inserted here -->
+    </div>
+    
+    <div class="telegram-section">
+      <h2 class="telegram-title">Get Instant Updates on Telegram</h2>
+      <p class="telegram-description">
+        Access real-time cryptocurrency prices anytime and anywhere with our Telegram bot. 
+      </p>
+      <a href="https://t.me/crypteller_bot" target="_blank" rel="noopener" class="telegram-button">
+        <svg class="telegram-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2L2 10.75l7.5 3M21.5 2l-5 19.5-7-8M9.5 13.75l-3 8.25 7-8"></path>
+        </svg>
+        Open CryptoTeller Bot
+      </a>
+    </div>
+    
+    <footer>
+      <p>© 2025 <span class="footer-logo">RGB.Development</span> • Powered by CoinGecko API</p>
+    </footer>
+  </div>
+
+  <script>
+    /**
+     * Main application script for cryptocurrency price tracker
+     * This app fetches data from CoinGecko API, handles caching,
+     * and provides search and display functionality with fallbacks
+     * for when API limits are reached.
+     */
+
+    // Store all cryptocurrency data fetched from API for search functionality
+    let allCryptoData = [];
+
+    /**
+     * API response cache system
+     * Stores API responses in memory and localStorage with expiration times
+     * to reduce API calls and provide data when offline or rate-limited
+     */
+    const apiCache = {
+      // In-memory cache storage
+      cache: {},
+      
+      /**
+       * Get data from cache if valid and not expired
+       * @param {string} key - Cache key to retrieve
+       * @returns {object|null} - Cached data or null if invalid/expired
+       */
+      get: function(key) {
+        const cachedItem = this.cache[key];
+        if (!cachedItem) return null;
+        
+        // Check if cache entry is expired (5 minutes)
+        const now = Date.now();
+        if (now - cachedItem.timestamp > 5 * 60 * 1000) {
+          delete this.cache[key];
+          return null;
+        }
+        
+        return cachedItem.data;
+      },
+      
+      /**
+       * Store data in cache with timestamp
+       * Also persists to localStorage for reuse across sessions
+       * @param {string} key - Cache key
+       * @param {object} data - Data to store
+       */
+      set: function(key, data) {
+        this.cache[key] = {
+          data: data,
+          timestamp: Date.now()
+        };
+        
+        // Persist to localStorage for use across sessions
+        try {
+          const storageItem = {
+            data: data,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('crypto_cache_' + key, JSON.stringify(storageItem));
+        } catch (e) {
+          console.warn('Failed to store in localStorage:', e);
+        }
+      },
+      
+      /**
+       * Initialize cache from localStorage on page load
+       * Restores previously cached data if not expired
+       */
+      init: function() {
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('crypto_cache_')) {
+              const cacheKey = key.replace('crypto_cache_', '');
+              const item = JSON.parse(localStorage.getItem(key));
+              
+              // Check if item is expired (10 minutes)
+              const now = Date.now();
+              if (now - item.timestamp <= 10 * 60 * 1000) {
+                this.cache[cacheKey] = item;
+              } else {
+                localStorage.removeItem(key);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to load from localStorage:', e);
+        }
+      }
+    };
+    
+    /**
+     * Request throttling system to manage API rate limits
+     * Queues requests and implements exponential backoff for retries
+     * when rate limits are encountered
+     */
+    const requestThrottler = {
+      queue: [],
+      inProgress: false,
+      retryDelay: 1000,
+      
+      /**
+       * Add a request to the queue for processing
+       * @param {Function} requestFn - Function that returns a Promise for the API request
+       * @param {Function} onSuccess - Callback for successful requests
+       * @param {Function} onError - Callback for failed requests
+       */
+      add: function(requestFn, onSuccess, onError) {
+        this.queue.push({
+          requestFn,
+          onSuccess,
+          onError,
+          attempt: 0
+        });
+        
+        if (!this.inProgress) {
+          this.processNext();
+        }
+      },
+      
+      /**
+       * Process the next request in the queue
+       * Implements retry logic with exponential backoff for rate limit errors
+       */
+      processNext: function() {
+        if (this.queue.length === 0) {
+          this.inProgress = false;
+          return;
+        }
+        
+        this.inProgress = true;
+        const request = this.queue.shift();
+        
+        request.requestFn()
+          .then(data => {
+            request.onSuccess(data);
+            // Small delay between requests to avoid rate limiting
+            setTimeout(() => this.processNext(), 300);
+          })
+          .catch(error => {
+            // Handle rate limit errors with exponential backoff
+            if (error.status === 429 || error.message?.includes('rate limit')) {
+              request.attempt++;
+              const delay = Math.min(30000, this.retryDelay * Math.pow(2, request.attempt - 1));
+              
+              console.log(`Rate limit hit. Retrying in ${delay/1000} seconds...`);
+              
+              // Requeue with backoff if under max attempts
+              if (request.attempt < 4) {
+                setTimeout(() => {
+                  this.queue.unshift(request);
+                  this.processNext();
+                }, delay);
+              } else {
+                request.onError(error);
+                setTimeout(() => this.processNext(), 1000);
+              }
+            } else {
+              request.onError(error);
+              setTimeout(() => this.processNext(), 500);
+            }
+          });
+      }
+    };
+    
+    /**
+     * Fallback data for popular cryptocurrencies
+     * Used when the API is unavailable or rate-limited
+     * Provides reasonable estimates for display
+     */
+    const popularCryptos = {
+      'bitcoin': { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 58000, change: 2.5 },
+      'ethereum': { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', price: 3500, change: 1.8 },
+      'dogecoin': { id: 'dogecoin', name: 'Dogecoin', symbol: 'DOGE', price: 0.12, change: 1.2 },
+      'solana': { id: 'solana', name: 'Solana', symbol: 'SOL', price: 140, change: 3.1 },
+      'ripple': { id: 'ripple', name: 'XRP', symbol: 'XRP', price: 0.5, change: -0.8 },
+      'cardano': { id: 'cardano', name: 'Cardano', symbol: 'ADA', price: 0.45, change: 0.3 },
+      'tether': { id: 'tether', name: 'Tether', symbol: 'USDT', price: 1, change: 0.01 },
+      'binancecoin': { id: 'binancecoin', name: 'BNB', symbol: 'BNB', price: 580, change: 1.5 },
+      'polkadot': { id: 'polkadot', name: 'Polkadot', symbol: 'DOT', price: 6.5, change: 0.7 }
+    };
+
+    // List of cryptocurrency IDs to fetch by default
+    const cryptoIds = [
+      'bitcoin',
+      'ethereum',
+      'solana',
+      'the-open-network',
+      'tether',
+      'ripple',
+    ];
+    
+    // Map of crypto IDs to their display names and symbols
+    const cryptoMap = {
+      'bitcoin': { name: 'Bitcoin', symbol: 'BTC' },
+      'ethereum': { name: 'Ethereum', symbol: 'ETH' },
+      'solana': { name: 'Solana', symbol: 'SOL' },
+      'the-open-network': { name: 'Toncoin', symbol: 'TON' },
+      'tether': { name: 'Tether', symbol: 'USDT' },
+      'ripple': { name: 'XRP', symbol: 'XRP' },
+    };
+
+    /**
+     * Format price values for display
+     * Adjusts decimal places based on price magnitude
+     * @param {number} price - The price value to format
+     * @returns {string} - Formatted price string
+     */
+    function formatPrice(price) {
+      if (price >= 1000) {
+        return price.toLocaleString('en-US', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2 
+        });
+      } else if (price >= 1) {
+        return price.toLocaleString('en-US', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2 
+        });
+      } else {
+        return price.toLocaleString('en-US', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 4
+        });
+      }
+    }
+    
+    /**
+     * Format large numbers with B/M/T suffixes
+     * @param {number} num - The number to format
+     * @returns {string} - Formatted number with appropriate suffix
+     */
+    function formatLargeNumber(num) {
+      if (num >= 1e12) {
+        return (num / 1e12).toFixed(2) + 'T';
+      } else if (num >= 1e9) {
+        return (num / 1e9).toFixed(2) + 'B';
+      } else if (num >= 1e6) {
+        return (num / 1e6).toFixed(2) + 'M';
+      } else {
+        return num.toLocaleString();
+      }
+    }
+
+    /**
+     * Main function to fetch cryptocurrency price data
+     * Handles API requests, caching, and fallback strategies
+     */
+    async function fetchCryptoPrices() {
+      const refreshButton = document.getElementById('refreshButton');
+      const loadingContainer = document.getElementById('loadingContainer');
+      const errorContainer = document.getElementById('errorContainer');
+      const cryptoGrid = document.getElementById('cryptoGrid');
+      
+      // Update UI to loading state
+      refreshButton.textContent = 'Fetching...';
+      refreshButton.disabled = true;
+      loadingContainer.style.display = 'flex';
+      errorContainer.style.display = 'none';
+      cryptoGrid.style.display = 'none';
+      
+      // Check for cached data first
+      const cacheKey = `markets_${cryptoIds.join('_')}`;
+      const cachedData = apiCache.get(cacheKey);
+      
+      if (cachedData) {
+        console.log('Using cached data');
+        allCryptoData = cachedData;
+        
+        // Update the last updated timestamp
+        const now = new Date();
+        document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleString()} (cached)`;
+        
+        // Process and display the data
+        renderCryptoCards(cachedData);
+        
+        // Show the grid and hide loading
+        loadingContainer.style.display = 'none';
+        cryptoGrid.style.display = 'grid';
+        
+        // Reset button state
+        refreshButton.textContent = 'Refresh Prices';
+        refreshButton.disabled = false;
+        
+        return;
+      }
+      
+      try {
+        // CoinGecko API endpoint for multiple coins
+        const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cryptoIds.join(',')}&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`;
+        
+        // Use the throttler for this request
+        await new Promise((resolve, reject) => {
+          requestThrottler.add(
+            // Request function
+            () => fetch(url).then(response => {
+              if (!response.ok) {
+                throw { status: response.status, message: `API request failed with status ${response.status}` };
+              }
+              return response.json();
+            }),
+            // Success handler
+            (data) => {
+              // Store the data in our global variable for search functionality
+              allCryptoData = data;
+              
+              // Cache the successful response
+              apiCache.set(cacheKey, data);
+              
+              // Update the last updated timestamp
+              const now = new Date();
+              document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleString()}`;
+              
+              // Process and display the data
+              renderCryptoCards(data);
+              
+              // Show the grid and hide loading
+              loadingContainer.style.display = 'none';
+              cryptoGrid.style.display = 'grid';
+              
+              resolve();
+            },
+            // Error handler
+            (error) => {
+              console.error('Error fetching data:', error);
+              
+              // Try to use fallback data for the main currencies
+              const fallbackData = cryptoIds.map(id => {
+                const fallback = popularCryptos[id];
+                if (fallback) {
+                  return {
+                    id: fallback.id,
+                    name: fallback.name,
+                    symbol: fallback.symbol,
+                    current_price: fallback.price,
+                    price_change_percentage_24h: fallback.change,
+                    total_volume: 1000000000,
+                    market_cap: 10000000000,
+                    image: `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`
+                  };
+                }
+                return {
+                  id: id,
+                  name: cryptoMap[id]?.name || id,
+                  symbol: cryptoMap[id]?.symbol || id.toUpperCase(),
+                  current_price: 'N/A',
+                  price_change_percentage_24h: 0,
+                  total_volume: 'N/A',
+                  market_cap: 'N/A',
+                  image: null
+                };
+              });
+              
+              // Show error message
+              errorContainer.innerHTML = `
+                <div class="error-message">
+                  <strong>Error loading data:</strong> ${error.message || 'Unknown error'}
+                  <p>Using cached data where possible. This could be due to CoinGecko API rate limits.</p>
+                </div>
+              `;
+              
+              // Use fallback data
+              renderCryptoCards(fallbackData);
+              
+              loadingContainer.style.display = 'none';
+              errorContainer.style.display = 'block';
+              cryptoGrid.style.display = 'grid';
+              
+              reject(error);
+            }
+          );
+        });
+      } catch (error) {
+        console.error('Error in fetch flow:', error);
+      } finally {
+        // Reset button state
+        refreshButton.textContent = 'Refresh Prices';
+        refreshButton.disabled = false;
+      }
+    }
+
+    /**
+     * Render cryptocurrency cards with data
+     * Creates HTML elements for each crypto and adds them to the grid
+     * @param {Array} cryptoData - Array of cryptocurrency data objects
+     */
+    function renderCryptoCards(cryptoData) {
+      const grid = document.getElementById('cryptoGrid');
+      grid.innerHTML = '';
+      
+      cryptoData.forEach(crypto => {
+        const isPositive = crypto.price_change_percentage_24h > 0;
+        const cardElement = document.createElement('div');
+        cardElement.className = 'crypto-card';
+        
+        // Get display name and symbol from our map, or use API values as fallback
+        const displayInfo = cryptoMap[crypto.id] || { 
+          name: crypto.name, 
+          symbol: crypto.symbol.toUpperCase() 
+        };
+        
+        // Create the URL for the coin on CoinGecko
+        const coinUrl = `https://www.coingecko.com/en/coins/${crypto.id}`;
+        
+        cardElement.innerHTML = `
+          <div class="card-header">
+            ${crypto.image ? 
+              `<div class="crypto-icon" style="background-image: url('${crypto.image}')"></div>` : 
+              `<div class="crypto-icon-fallback" style="background-color: #${Math.floor(Math.random()*16777215).toString(16)}">
+                ${displayInfo.symbol.charAt(0)}
+              </div>`
+            }
+            <div class="crypto-title">
+              <div class="crypto-name">
+                <a href="${coinUrl}" target="_blank" rel="noopener noreferrer" class="crypto-name-link" title="View ${displayInfo.name} on CoinGecko">
+                  ${displayInfo.name}
+                </a>
+              </div>
+              <div class="crypto-symbol">${displayInfo.symbol}</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="price">$${formatPrice(crypto.current_price)}</div>
+            <div class="price-change ${isPositive ? 'positive' : 'negative'}">
+              ${isPositive ? '↑' : '↓'} ${Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
+            </div>
+            <div class="stats">
+              <div class="stat-item">
+                <div class="stat-label">Volume (24h)</div>
+                <div class="stat-value">$${formatLargeNumber(crypto.total_volume)}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Market Cap</div>
+                <div class="stat-value">$${formatLargeNumber(crypto.market_cap)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        grid.appendChild(cardElement);
+      });
+    }
+
+    // Track search operations that are in progress to prevent duplicates
+    const searchInProgress = {};
+    
+    // Initialize the application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize cache from localStorage
+      apiCache.init();
+      
+      const searchInput = document.getElementById('cryptoSearch');
+      const searchResults = document.getElementById('searchResults');
+      const searchButton = document.getElementById('searchButton');
+      
+      // Search input debounce timer
+      let searchDebounceTimer;
+      
+      // Search input event listener with debouncing
+      searchInput.addEventListener('input', function(event) {
+        // Clear any existing timer
+        clearTimeout(searchDebounceTimer);
+        
+        // Set a new timer to execute search after user stops typing
+        searchDebounceTimer = setTimeout(() => {
+          handleSearch(event);
+        }, 800); // 800ms debounce time
+      });
+      
+      // Search button click event
+      searchButton.addEventListener('click', () => {
+        clearTimeout(searchDebounceTimer);
+        handleSearch({ target: searchInput });
+      });
+      
+      // Close search results when clicking outside
+      document.addEventListener('click', function(event) {
+        if (!event.target.closest('.search-container')) {
+          searchResults.classList.remove('active');
+        }
+      });
+      
+      // Handle Enter key in search input
+      searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          clearTimeout(searchDebounceTimer);
+          const firstResult = searchResults.querySelector('.result-item');
+          if (firstResult && !firstResult.classList.contains('loading-item') && firstResult.textContent !== 'No results found' && firstResult.textContent !== 'Error searching. Try again later.') {
+            firstResult.click();
+          }
+        }
+      });
+      
+      // Fetch cryptocurrency data on page load
+      fetchCryptoPrices();
+    });
+
+    /**
+     * Handle search input and show results
+     * Uses multiple sources: local data, cached results, and API search
+     * @param {Event} event - The event that triggered the search
+     */
+    function handleSearch(event) {
+      const searchTerm = event.target.value.trim().toLowerCase();
+      const searchResults = document.getElementById('searchResults');
+      
+      // Clear previous results
+      searchResults.innerHTML = '';
+      
+      if (searchTerm.length < 2) {
+        searchResults.classList.remove('active');
+        return;
+      }
+      
+      // Show searching state immediately
+      searchResults.innerHTML = `
+        <div class="search-loading">
+          <div class="search-loading-spinner"></div>
+          <div>Searching cryptocurrencies...</div>
+        </div>
+      `;
+      searchResults.classList.add('active');
+      
+      // Check if we have popular crypto matching the search
+      const popularMatches = Object.values(popularCryptos).filter(crypto => 
+        crypto.name.toLowerCase().includes(searchTerm) || 
+        crypto.symbol.toLowerCase().includes(searchTerm)
+      );
+      
+      // Filter existing loaded cryptocurrencies based on search term
+      const matchingCryptos = allCryptoData.filter(crypto => 
+        crypto.name.toLowerCase().includes(searchTerm) || 
+        crypto.symbol.toLowerCase().includes(searchTerm)
+      );
+      
+      // First check if we have cached search results
+      const cacheKey = `search_${searchTerm}`;
+      const cachedResults = apiCache.get(cacheKey);
+      
+      if (cachedResults) {
+        console.log('Using cached search results');
+        displaySearchResults(cachedResults, searchResults, event);
+        return;
+      }
+      
+      if (matchingCryptos.length > 0) {
+        // Display results from existing data
+        displaySearchResults(matchingCryptos, searchResults, event);
+      } else if (popularMatches.length > 0) {
+        // Convert popular matches to expected format and display
+        const formattedPopularMatches = popularMatches.map(crypto => ({
+          id: crypto.id,
+          name: crypto.name,
+          symbol: crypto.symbol,
+          image: `https://assets.coingecko.com/coins/images/1/small/${crypto.id}.png`,
+          current_price: crypto.price,
+          price_change_percentage_24h: crypto.change,
+          total_volume: 1000000000,
+          market_cap: 10000000000
+        }));
+        
+        // Add a note that these are cached results
+        searchResults.innerHTML = '<div class="result-item" style="background:#f9f9f9;cursor:default;">⚠️ Using cached data due to API limits</div>';
+        displaySearchResults(formattedPopularMatches, searchResults, event);
+      } else {
+        // Search for cryptocurrency on CoinGecko API
+        searchCoinGecko(searchTerm, searchResults, event);
+      }
+    }
+    
+    /**
+     * Search for cryptocurrencies using CoinGecko API
+     * Handles rate limits, caching, and fallback mechanisms
+     * @param {string} searchTerm - The search query
+     * @param {HTMLElement} searchResults - The results container element
+     * @param {Event} event - The event that triggered the search
+     */
+    async function searchCoinGecko(searchTerm, searchResults, event) {
+      // Check rate limit tracking in localStorage
+      let rateLimitInfo = { count: 0, resetTime: 0 };
+      try {
+        const storedInfo = localStorage.getItem('cg_rate_limit');
+        if (storedInfo) {
+          rateLimitInfo = JSON.parse(storedInfo);
+        }
+      } catch (e) {
+        console.warn('Failed to read rate limit info:', e);
+      }
+      
+      const now = Date.now();
+      
+      // Reset count if the reset time has passed
+      if (now > rateLimitInfo.resetTime) {
+        rateLimitInfo = { count: 0, resetTime: now + 60000 }; // Reset in 1 minute
+      }
+      
+      // Check if we're approaching rate limit (CoinGecko allows ~10-30 requests per minute)
+      if (rateLimitInfo.count >= 25) {
+        searchResults.innerHTML = `
+          <div class="result-item">
+            Rate limit protection active. Please try again in ${Math.ceil((rateLimitInfo.resetTime - now) / 1000)} seconds.
+          </div>
+        `;
+        return;
+      }
+      
+      // Increment count and save
+      rateLimitInfo.count++;
+      try {
+        localStorage.setItem('cg_rate_limit', JSON.stringify(rateLimitInfo));
+      } catch (e) {
+        console.warn('Failed to save rate limit info:', e);
+      }
+      
+      try {
+        // First check if search is already in progress for this term
+        if (searchInProgress[searchTerm]) {
+          console.log('Search already in progress, waiting for results...');
+          return;
+        }
+        
+        searchInProgress[searchTerm] = true;
+        
+        // Use CoinGecko search API endpoint with proper error handling
+        const searchUrl = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(searchTerm)}`;
+        
+        // Check for cached search results first
+        const cacheKey = `search_${searchTerm}`;
+        const cachedResults = apiCache.get(cacheKey);
+        
+        if (cachedResults) {
+          console.log('Using cached search results');
+          displaySearchResults(cachedResults, searchResults, event);
+          searchInProgress[searchTerm] = false;
+          return;
+        }
+        
+        // Use the throttler for this request
+        await new Promise((resolve, reject) => {
+          requestThrottler.add(
+            // Request function
+            () => fetch(searchUrl).then(response => {
+              if (response.status === 429) {
+                throw { status: 429, message: 'Rate limit reached' };
+              }
+              if (!response.ok) {
+                throw { status: response.status, message: `API search request failed with status ${response.status}` };
+              }
+              return response.json();
+            }),
+            // Success handler
+            async (data) => {
+              // Extract coin data from response
+              const coins = data.coins || [];
+              
+              if (coins.length === 0) {
+                searchResults.innerHTML = '<div class="result-item">No results found</div>';
+                searchInProgress[searchTerm] = false;
+                resolve();
+                return;
+              }
+              
+              // Limit to top 5 results to avoid overwhelming the user
+              const topResults = coins.slice(0, 5);
+              
+              // Show temporary results with loading state
+              searchResults.innerHTML = '';
+              topResults.forEach(coin => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item loading-item';
+                resultItem.innerHTML = `
+                  <img src="${coin.thumb}" class="result-icon" alt="${coin.name}">
+                  <div class="result-info">
+                    <div class="result-name">${coin.name}</div>
+                    <div class="result-symbol">${coin.symbol.toUpperCase()}</div>
+                  </div>
+                  <div class="search-loading-spinner" style="width: 12px; height: 12px;"></div>
+                `;
+                searchResults.appendChild(resultItem);
+              });
+              
+              try {
+                // Fetch detailed information for each coin - one at a time to avoid rate limits
+                const detailedResults = [];
+                
+                for (const coin of topResults) {
+                  try {
+                    // Check if we have coin details in the cache
+                    const coinCacheKey = `coin_${coin.id}`;
+                    const cachedCoinDetails = apiCache.get(coinCacheKey);
+                    
+                    if (cachedCoinDetails) {
+                      detailedResults.push(cachedCoinDetails);
+                      continue;
+                    }
+                    
+                    // Increment API request count
+                    rateLimitInfo.count++;
+                    localStorage.setItem('cg_rate_limit', JSON.stringify(rateLimitInfo));
+                    
+                    // Check if we're over rate limit protection threshold
+                    if (rateLimitInfo.count >= 25) {
+                      // Use fallback for remaining coins
+                      const fallback = popularCryptos[coin.id] || {
+                        id: coin.id,
+                        name: coin.name,
+                        symbol: coin.symbol.toUpperCase(),
+                        price: 'N/A',
+                        change: 0
+                      };
+                      
+                      detailedResults.push({
+                        id: fallback.id,
+                        name: fallback.name,
+                        symbol: fallback.symbol,
+                        image: coin.large || coin.thumb,
+                        current_price: fallback.price === 'N/A' ? 'N/A' : fallback.price,
+                        price_change_percentage_24h: fallback.change,
+                        total_volume: 'N/A',
+                        market_cap: 'N/A'
+                      });
+                      continue;
+                    }
+                    
+                    const detailUrl = `https://api.coingecko.com/api/v3/coins/${coin.id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`;
+                    
+                    // Fetch with error handling
+                    const fetchResult = await fetch(detailUrl);
+                    
+                    if (fetchResult.status === 429) {
+                      // Fall back to basic info on rate limit
+                      const fallback = popularCryptos[coin.id] || {
+                        price: 'N/A',
+                        change: 0
+                      };
+                      
+                      const basicInfo = {
+                        id: coin.id,
+                        name: coin.name,
+                        symbol: coin.symbol.toUpperCase(),
+                        image: coin.large || coin.thumb,
+                        current_price: fallback.price === 'N/A' ? 'N/A' : fallback.price,
+                        price_change_percentage_24h: fallback.change,
+                        total_volume: 'N/A',
+                        market_cap: 'N/A'
+                      };
+                      
+                      detailedResults.push(basicInfo);
+                      // Still cache this limited data
+                      apiCache.set(coinCacheKey, basicInfo);
+                      
+                      // Update our rate limit info
+                      rateLimitInfo.count = 30; // Force slowdown
+                      localStorage.setItem('cg_rate_limit', JSON.stringify(rateLimitInfo));
+                      
+                      continue;
+                    }
+                    
+                    if (!fetchResult.ok) {
+                      throw new Error(`Failed to get details for ${coin.id}`);
+                    }
+                    
+                    const detail = await fetchResult.json();
+                    
+                    // Ensure we have valid data with fallbacks
+                    const currentPrice = detail.market_data?.current_price?.usd;
+                    const priceChange = detail.market_data?.price_change_percentage_24h || 0;
+                    const totalVolume = detail.market_data?.total_volume?.usd;
+                    const marketCap = detail.market_data?.market_cap?.usd;
+                    
+                    // Format the data to match our existing structure
+                    const coinDetail = {
+                      id: detail.id,
+                      name: detail.name,
+                      symbol: detail.symbol.toUpperCase(),
+                      image: detail.image?.large || coin.large || coin.thumb,
+                      current_price: currentPrice !== undefined && currentPrice !== null ? currentPrice : 'N/A',
+                      price_change_percentage_24h: priceChange,
+                      total_volume: totalVolume !== undefined && totalVolume !== null ? totalVolume : 'N/A',
+                      market_cap: marketCap !== undefined && marketCap !== null ? marketCap : 'N/A'
+                    };
+                    
+                    detailedResults.push(coinDetail);
+                    
+                    // Cache the individual coin detail
+                    apiCache.set(coinCacheKey, coinDetail);
+                    
+                    // Wait a bit longer between requests to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                    
+                  } catch (error) {
+                    console.error(`Error fetching details for ${coin.id}:`, error);
+                    // Return basic info if detailed info can't be fetched
+                    detailedResults.push({
+                      id: coin.id,
+                      name: coin.name,
+                      symbol: coin.symbol.toUpperCase(),
+                      image: coin.large || coin.thumb,
+                      current_price: 'N/A',
+                      price_change_percentage_24h: 0,
+                      total_volume: 'N/A',
+                      market_cap: 'N/A'
+                    });
+                  }
+                }
+                
+                // Cache the search results
+                if (detailedResults.length > 0) {
+                  apiCache.set(cacheKey, detailedResults);
+                }
+                
+                // Display the results
+                displaySearchResults(detailedResults, searchResults, event);
+              } catch (error) {
+                console.error('Error processing search details:', error);
+                searchResults.innerHTML = '<div class="result-item">Error obtaining details. Using limited data.</div>';
+                
+                // Use basic info from the search
+                const basicResults = topResults.map(coin => ({
+                  id: coin.id,
+                  name: coin.name,
+                  symbol: coin.symbol.toUpperCase(),
+                  image: coin.large || coin.thumb,
+                  current_price: 'N/A',
+                  price_change_percentage_24h: 0,
+                  total_volume: 'N/A',
+                  market_cap: 'N/A'
+                }));
+                
+                displaySearchResults(basicResults, searchResults, event);
+              }
+              
+              searchInProgress[searchTerm] = false;
+              resolve();
+            },
+            // Error handler
+            (error) => {
+              console.error('Error searching CoinGecko:', error);
+              
+              if (error.status === 429) {
+                searchResults.innerHTML = '<div class="result-item">API rate limit reached. Using fallback data.</div>';
+                
+                // If rate limited, use popular cryptos as fallback
+                const fallbackResults = Object.values(popularCryptos)
+                  .filter(crypto => 
+                    crypto.name.toLowerCase().includes(searchTerm) || 
+                    crypto.symbol.toLowerCase().includes(searchTerm)
+                  )
+                  .map(crypto => ({
+                    id: crypto.id,
+                    name: crypto.name,
+                    symbol: crypto.symbol,
+                    image: `https://assets.coingecko.com/coins/images/1/small/${crypto.id}.png`,
+                    current_price: crypto.price,
+                    price_change_percentage_24h: crypto.change,
+                    total_volume: 1000000000,
+                    market_cap: 10000000000
+                  }));
+                
+                if (fallbackResults.length > 0) {
+                  displaySearchResults(fallbackResults, searchResults, event);
+                } else {
+                  searchResults.innerHTML += '<div class="result-item">No matches in fallback data.</div>';
+                }
+                
+                // Update our rate limit info - assume we're at limit
+                rateLimitInfo.count = 30;
+                localStorage.setItem('cg_rate_limit', JSON.stringify(rateLimitInfo));
+              } else {
+                searchResults.innerHTML = '<div class="result-item">Error searching. Try again later.</div>';
+              }
+              
+              searchInProgress[searchTerm] = false;
+              reject(error);
+            }
+          );
+        });
+        
+      } catch (error) {
+        console.error('Error in search flow:', error);
+        searchResults.innerHTML = '<div class="result-item">Error searching. Try again later.</div>';
+        searchInProgress[searchTerm] = false;
+      }
+    }
+    
+    /**
+     * Display search results in the dropdown
+     * @param {Array} cryptos - Array of cryptocurrency data objects
+     * @param {HTMLElement} searchResults - The results container element
+     * @param {Event} event - The event that triggered the search
+     */
+    function displaySearchResults(cryptos, searchResults, event) {
+      // Clear previous results
+      searchResults.innerHTML = '';
+      
+      // Create result items
+      cryptos.forEach(crypto => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-item';
+        
+        // Create icon
+        let iconHTML = '';
+        if (crypto.image) {
+          iconHTML = `<img src="${crypto.image}" class="result-icon" alt="${crypto.name}">`;
+        } else {
+          const backgroundColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+          iconHTML = `
+            <div class="result-icon-fallback" style="background-color: ${backgroundColor}">
+              ${crypto.symbol.charAt(0).toUpperCase()}
+            </div>
+          `;
+        }
+        
+        // Create the URL for the coin on CoinGecko
+        const coinUrl = `https://www.coingecko.com/en/coins/${crypto.id}`;
+        
+        resultItem.innerHTML = `
+          ${iconHTML}
+          <div class="result-info">
+            <div class="result-name">
+              <a href="${coinUrl}" target="_blank" rel="noopener noreferrer" class="crypto-name-link" title="View ${crypto.name} on CoinGecko">
+                ${crypto.name}
+              </a>
+            </div>
+            <div class="result-symbol">${crypto.symbol.toUpperCase()}</div>
+          </div>
+        `;
+        
+        // We'll keep the click behavior on the entire result item to show the modal
+        // but clicking specifically on the name link will go to CoinGecko
+        resultItem.addEventListener('click', function(e) {
+          // Only show modal if the click wasn't on the name link
+          if (!e.target.closest('.crypto-name-link')) {
+            showCryptoModal(crypto);
+            searchResults.classList.remove('active');
+            event.target.value = '';
+          }
+        });
+        
+        searchResults.appendChild(resultItem);
+      });
+      
+      searchResults.classList.add('active');
+    }
+
+    /**
+     * Show detailed modal for a cryptocurrency
+     * Creates a modal popup with comprehensive information
+     * @param {Object} crypto - The cryptocurrency data object
+     */
+    function showCryptoModal(crypto) {
+      // Remove any existing modal
+      let existingModal = document.querySelector('.modal-overlay');
+      if (existingModal) {
+        document.body.removeChild(existingModal);
+      }
+      
+      // Create modal overlay
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay';
+      
+      // Create crypto card for modal
+      const modalCard = document.createElement('div');
+      modalCard.className = 'modal-crypto-card';
+      
+      // Handle the case where price change might be missing
+      const priceChange = crypto.price_change_percentage_24h || 0;
+      const isPositive = priceChange > 0;
+      
+      // Format prices and values correctly
+      const formattedPrice = crypto.current_price === 'N/A' ? 'N/A' : `$${formatPrice(crypto.current_price)}`;
+      const formattedVolume = crypto.total_volume === 'N/A' ? 'N/A' : `$${formatLargeNumber(crypto.total_volume)}`;
+      const formattedMarketCap = crypto.market_cap === 'N/A' ? 'N/A' : `$${formatLargeNumber(crypto.market_cap)}`;
+      
+      // Create the URL for the coin on CoinGecko
+      const coinUrl = `https://www.coingecko.com/en/coins/${crypto.id}`;
+      
+      modalCard.innerHTML = `
+        <button class="modal-close" title="Close cryptocurrency details">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="card-header">
+          ${crypto.image ? 
+            `<div class="crypto-icon" style="background-image: url('${crypto.image}')"></div>` : 
+            `<div class="crypto-icon-fallback" style="background-color: #${Math.floor(Math.random()*16777215).toString(16)}">
+              ${crypto.symbol.charAt(0).toUpperCase()}
+            </div>`
+          }
+          <div class="crypto-title">
+            <div class="crypto-name">
+              <a href="${coinUrl}" target="_blank" rel="noopener noreferrer" class="crypto-name-link" title="View ${crypto.name} on CoinGecko">
+                ${crypto.name}
+              </a>
+            </div>
+            <div class="crypto-symbol">${crypto.symbol.toUpperCase()}</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="price">${formattedPrice}</div>
+          <div class="price-change ${isPositive ? 'positive' : 'negative'}">
+            ${isPositive ? '↑' : '↓'} ${Math.abs(priceChange).toFixed(2)}%
+          </div>
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-label">Volume (24h)</div>
+              <div class="stat-value">${formattedVolume}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Market Cap</div>
+              <div class="stat-value">${formattedMarketCap}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add modal to the document
+      modalOverlay.appendChild(modalCard);
+      document.body.appendChild(modalOverlay);
+      
+      // Add slight delay before adding active class to trigger animation
+      setTimeout(() => {
+        modalOverlay.classList.add('active');
+      }, 10);
+      
+      // Close modal event
+      const closeButton = modalOverlay.querySelector('.modal-close');
+      closeButton.addEventListener('click', function() {
+        closeModal(modalOverlay);
+      });
+      
+      // Close modal when clicking outside the card
+      modalOverlay.addEventListener('click', function(event) {
+        if (event.target === modalOverlay) {
+          closeModal(modalOverlay);
+        }
+      });
+      
+      // Close modal on Escape key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeModal(modalOverlay);
+        }
+      });
+    }
+
+    /**
+     * Close the modal with animation
+     * @param {HTMLElement} modalOverlay - The modal overlay element
+     */
+    function closeModal(modalOverlay) {
+      modalOverlay.classList.remove('active');
+      
+      // Remove modal after animation completes
+      setTimeout(() => {
+        if (modalOverlay.parentNode) {
+          document.body.removeChild(modalOverlay);
+        }
+      }, 300);
+    }
+  </script>
+</body>
+</html>
