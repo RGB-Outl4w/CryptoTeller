@@ -40,13 +40,6 @@ EXCHANGE_RATE_API_KEYS = [
     # Add more keys as needed
 ]
 
-# Whitelisted chat IDs (replace with your own chat IDs)
-WHITELISTED_CHAT_IDS = (
-    "-1001234567890",  # Example chat ID 1
-    "-1000987654321",  # Example chat ID 2
-    # Add more chat IDs as needed
-)
-
 # Sponsors and donators (replace with your own sponsors/donators)
 SPONSORS_AND_DONATORS = (
     "[Sponsor Name](https://example.com)",  # Example sponsor

@@ -52,18 +52,6 @@ def handle_start(message):
     else:
         bot.send_message(message.chat.id, "**Greetings!** I'm [CryptoTeller](https://t.me/crypteller_bot), your friend in the world of cryptocurrencies", parse_mode='Markdown', disable_web_page_preview=True)
 
-@bot.message_handler(commands=["wlstatus"])
-def handle_wlstatus(message):
-    """Checks if the current group is whitelisted."""
-    if message.chat.type in ("group", "supergroup"):
-        chat_id = str(message.chat.id)
-        if chat_id in constants.WHITELISTED_CHAT_IDS:
-            bot.send_message(message.chat.id, "Current group is **whitelisted** ✔︎", parse_mode='Markdown')
-        else:
-            bot.send_message(message.chat.id, "Current group is **not whitelisted** ✖︎", parse_mode='Markdown')
-    else:
-        bot.send_message(message.chat.id, "This command only works in groups.")
-
 @bot.message_handler(commands=["help"])
 def handle_help(message):
     """Displays the help message."""
@@ -73,7 +61,7 @@ Here are my available commands:
 
 • **/start** - Starts a conversation with me.
 • **/crypto** - Shows the prices of specific cryptocurrencies.
-• **/wlstatus** - Checks if the current group is whitelisted.
+
 • **/help** - Displays this help message.
 • **/api** - **[DEV ONLY]** Shows currently used API key.
 """
@@ -85,7 +73,7 @@ def get_crypto_price(message):
     global cached_crypto_data
     chat_id = str(message.chat.id)
 
-    if message.chat.type in ("group", "supergroup") and chat_id in constants.WHITELISTED_CHAT_IDS:
+    if message.chat.type in ("group", "supergroup"):
         if chat_id not in last_used_time or time.time() - last_used_time[chat_id] >= constants.COOLDOWN_TIME_CRYPTO:
             try:
                 # Fetch all currencies at once
@@ -111,8 +99,6 @@ def get_crypto_price(message):
             seconds = int(remaining_time % 60)
             cooldown_text = f'*Command on cooldown.* Values will refresh in: *{minutes}* minutes *{seconds}* seconds'
             bot.send_message(chat_id, cooldown_text, parse_mode='Markdown')
-    else:
-        bot.send_message(chat_id, "This is not a group chat or the chat is not whitelisted.")
 
 def get_current_page_data(page):
     """Retrieves data for the specified page."""

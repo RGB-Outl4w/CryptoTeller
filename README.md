@@ -14,7 +14,6 @@ CryptoTeller is a Telegram bot designed to provide real-time cryptocurrency pric
 
 - **/start**: Starts a conversation with the bot.
 - **/crypto**: Displays the current prices of supported cryptocurrencies.
-- **/wlstatus**: Checks if the current group is whitelisted.
 - **/help**: Displays a list of available commands and their descriptions.
 - **/api**: (Developer Only) Shows the currently used API key.
 
@@ -45,7 +44,7 @@ CryptoTeller is a Telegram bot designed to provide real-time cryptocurrency pric
    MAIN_KEY=your_telegram_bot_token
    ```
 
-4. Update the `constants.py` file with your CoinMarketCap and ExchangeRate-API keys, as well as your whitelisted chat IDs.
+4. Update the `constants.py` file with your CoinMarketCap and ExchangeRate-API keys.
 
 ### Running the Bot
 
@@ -58,7 +57,6 @@ python cryptoTeller.py
 
 - **CoinMarketCap API Keys**: Add your API keys to the `CMC_API_KEYS` list in `constants.py`.
 - **ExchangeRate-API Keys**: Add your API keys to the `EXCHANGE_RATE_API_KEYS` list in `constants.py`.
-- **Whitelisted Chat IDs**: Add the chat IDs of the groups where you want the bot to be active in the `WHITELISTED_CHAT_IDS` tuple in `constants.py`.
 
 ## Contributing
 
