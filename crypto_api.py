@@ -1,31 +1,3 @@
-# .------------------------------------------------------------------------------------------------------------.
-# |                                                                                                            |
-# |                                                                                                            |
-# |                        ██████╗  ██████╗ ██████╗    ██████╗ ███████╗██╗   ██╗                               |
-# |                        ██╔══██╗██╔════╝ ██╔══██╗   ██╔══██╗██╔════╝██║   ██║                               |
-# |                        ██████╔╝██║  ███╗██████╔╝   ██║  ██║█████╗  ██║   ██║                               |
-# |                        ██╔══██╗██║   ██║██╔══██╗   ██║  ██║██╔══╝  ╚██╗ ██╔╝                               |
-# |                        ██║  ██║╚██████╔╝██████╔╝██╗██████╔╝███████╗ ╚████╔╝                                |
-# |                        ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝                                 |
-# |                                                                                                            |
-# |                                                                                                            |
-# |                                                                                                            |
-# |    █████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗        |
-# |    ╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝        |
-# |                                                                                                            |
-# |                                                                                                            |
-# |                                                                                                            |
-# |     ██████╗██████╗ ██╗   ██╗██████╗ ████████╗ ██████╗ ████████╗███████╗██╗     ██╗     ███████╗██████╗     |
-# |    ██╔════╝██╔══██╗╚██╗ ██╔╝██╔══██╗╚══██╔══╝██╔═══██╗╚══██╔══╝██╔════╝██║     ██║     ██╔════╝██╔══██╗    |
-# |    ██║     ██████╔╝ ╚████╔╝ ██████╔╝   ██║   ██║   ██║   ██║   █████╗  ██║     ██║     █████╗  ██████╔╝    |
-# |    ██║     ██╔══██╗  ╚██╔╝  ██╔═══╝    ██║   ██║   ██║   ██║   ██╔══╝  ██║     ██║     ██╔══╝  ██╔══██╗    |
-# |    ╚██████╗██║  ██║   ██║   ██║        ██║   ╚██████╔╝   ██║   ███████╗███████╗███████╗███████╗██║  ██║    |
-# |     ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝        ╚═╝    ╚═════╝    ╚═╝   ╚══════╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝    |
-# |                                                                                                            |
-# |                                                                                                            |
-# '------------------------------------------------------------------------------------------------------------'
-
-
 import requests
 from datetime import datetime, timezone, timedelta
 from constants import CMC_API_KEYS, EXCHANGE_RATE_API_KEYS, DEXSCREENER_API_URL
@@ -93,21 +65,68 @@ def get_crypto_prices(symbols):
                     break # Exit while loop on success
 
             except requests.exceptions.HTTPError as http_err:
-                if response.status_code == 429: # Rate limit
+                if response.status_code == 429:  # Rate limit
                     print(f"Rate limit hit for CMC API key index {current_api_key_index}. Switching key.")
-                    switch_api_key()
-                    headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
-                    # Continue loop to retry with new key
-                else:
-                    print(f"HTTP error occurred: {http_err} - Status Code: {response.status_code}")
-                    # For other HTTP errors, maybe return partial results or raise
-                    # For now, we break and return what we have (which might be empty)
-                    break
+                    # Try all available API keys before giving up
+                    initial_key = current_api_key_index
+                    while True:
+                        switch_api_key()
+                        if current_api_key_index == initial_key:
+                            print("All API keys exhausted. Waiting 60 seconds before retry.")
+                            time.sleep(60)  # Wait before retrying with first key
+                        headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+                        try:
+                            response = requests.get(url, params=params, headers=headers, timeout=10)
+                            response.raise_for_status()
+                            if response.status_code == 200:
+                                break
+                        except requests.exceptions.HTTPError as retry_err:
+                            if retry_err.response.status_code != 429:
+                                raise  # Re-raise if it's not a rate limit error
+                elif 400 <= response.status_code < 500:
+                    print(f"Client error occurred: {http_err} - Status Code: {response.status_code}")
+                    if response.status_code == 401:  # Unauthorized
+                        switch_api_key()  # Try another key
+                        headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+                    else:
+                        return results  # Return partial results for other client errors
+                else:  # 500+ server errors
+                    print(f"Server error occurred: {http_err} - Status Code: {response.status_code}")
+                    time.sleep(2)  # Wait before retry on server error
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching crypto prices: {e}")
-                # Handle connection errors, timeouts, etc.
-                # Decide whether to retry, switch key, or just return empty/partial results
-                # For simplicity, break and return potentially partial results
+                retry_count = 0
+                max_retries = 3
+                retry_delay = 1  # Initial delay in seconds
+                
+                while retry_count < max_retries:
+                    try:
+                        print(f"Retrying request (attempt {retry_count + 1}/{max_retries})...")
+                        time.sleep(retry_delay)
+                        
+                        # Switch API key before retry
+                        switch_api_key()
+                        headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+                        
+                        response = requests.get(url, params=params, headers=headers, timeout=10)
+                        response.raise_for_status()
+                        
+                        if response.status_code == 200:
+                            data = response.json().get("data", {})
+                            fetch_time = datetime.now(timezone.utc)
+                            for symbol in symbols_to_fetch:
+                                if symbol in data and 'quote' in data[symbol] and 'USD' in data[symbol]['quote']:
+                                    price_data = data[symbol]["quote"]["USD"]
+                                    results[symbol] = price_data
+                                    crypto_price_cache[symbol] = (price_data, fetch_time)
+                            return results
+                            
+                    except requests.exceptions.RequestException as retry_error:
+                        print(f"Retry attempt {retry_count + 1} failed: {retry_error}")
+                        retry_count += 1
+                        retry_delay *= 2  # Exponential backoff
+                
+                print("All retry attempts failed. Returning partial results.")
                 break
 
     return results
@@ -167,16 +186,60 @@ def get_currency_rate(from_currency, to_currency):
                  return None # Unsupported currency
             else:
                 print(f"Error: ExchangeRate-API request failed. Response: {data}")
-                # Consider switching key for generic errors too, or just return None
-                # switch_exchange_rate_api_key()
-                return None # Failed for other reasons
+                error_type = data.get("error-type", "unknown")
+                
+                # Switch API key for specific error types that might benefit from using a different key
+                if error_type in ["quota-reached", "plan-upgrade-required", "server-error"]:
+                    print(f"Switching API key due to error: {error_type}")
+                    switch_exchange_rate_api_key()
+                    continue  # Retry with new key
+                
+                # For rate limiting, implement exponential backoff
+                if error_type == "rate-limit-reached":
+                    retry_delay = 2
+                    max_retries = 3
+                    for retry in range(max_retries):
+                        print(f"Rate limit reached. Waiting {retry_delay} seconds before retry {retry + 1}/{max_retries}")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                        switch_exchange_rate_api_key()
+                        continue
+                
+                return None  # Failed for other unrecoverable reasons
 
         except requests.exceptions.RequestException as e:
             print(f"Error fetching exchange rate: {e}")
-            # Could be a connection error, timeout, etc.
-            # Decide whether to switch key or just return None
-            # switch_exchange_rate_api_key()
-            return None # Return None on request exception
+            retry_count = 0
+            max_retries = 3
+            retry_delay = 1  # Initial delay in seconds
+            
+            while retry_count < max_retries:
+                try:
+                    print(f"Retrying exchange rate request (attempt {retry_count + 1}/{max_retries})...")
+                    time.sleep(retry_delay)
+                    
+                    # Switch API key before retry
+                    switch_exchange_rate_api_key()
+                    current_api_key = EXCHANGE_RATE_API_KEYS[current_exchange_rate_api_key_index]
+                    
+                    url = f"https://v6.exchangerate-api.com/v6/{current_api_key}/pair/{from_currency}/{to_currency}"
+                    response = requests.get(url, timeout=10)
+                    response.raise_for_status()
+                    
+                    data = response.json()
+                    if data.get("result") == "success":
+                        rate = data.get('conversion_rate')
+                        if rate is not None:
+                            exchange_rate_cache[cache_key] = (float(rate), datetime.now(timezone.utc))
+                            return float(rate)
+                    
+                except requests.exceptions.RequestException as retry_error:
+                    print(f"Retry attempt {retry_count + 1} failed: {retry_error}")
+                    retry_count += 1
+                    retry_delay *= 2  # Exponential backoff
+            
+            print("All retry attempts failed")
+            return None  # Return None after all retries exhausted
 
 def switch_exchange_rate_api_key():
     """

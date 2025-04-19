@@ -1,38 +1,13 @@
-# .------------------------------------------------------------------------------------------------------------.
-# |                                                                                                            |
-# |                                                                                                            |
-# |                        ██████╗  ██████╗ ██████╗    ██████╗ ███████╗██╗   ██╗                               |
-# |                        ██╔══██╗██╔════╝ ██╔══██╗   ██╔══██╗██╔════╝██║   ██║                               |
-# |                        ██████╔╝██║  ███╗██████╔╝   ██║  ██║█████╗  ██║   ██║                               |
-# |                        ██╔══██╗██║   ██║██╔══██╗   ██║  ██║██╔══╝  ╚██╗ ██╔╝                               |
-# |                        ██║  ██║╚██████╔╝██████╔╝██╗██████╔╝███████╗ ╚████╔╝                                |
-# |                        ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝                                 |
-# |                                                                                                            |
-# |                                                                                                            |
-# |                                                                                                            |
-# |    █████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗        |
-# |    ╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝        |
-# |                                                                                                            |
-# |                                                                                                            |
-# |                                                                                                            |
-# |     ██████╗██████╗ ██╗   ██╗██████╗ ████████╗ ██████╗ ████████╗███████╗██╗     ██╗     ███████╗██████╗     |
-# |    ██╔════╝██╔══██╗╚██╗ ██╔╝██╔══██╗╚══██╔══╝██╔═══██╗╚══██╔══╝██╔════╝██║     ██║     ██╔════╝██╔══██╗    |
-# |    ██║     ██████╔╝ ╚████╔╝ ██████╔╝   ██║   ██║   ██║   ██║   █████╗  ██║     ██║     █████╗  ██████╔╝    |
-# |    ██║     ██╔══██╗  ╚██╔╝  ██╔═══╝    ██║   ██║   ██║   ██║   ██╔══╝  ██║     ██║     ██╔══╝  ██╔══██╗    |
-# |    ╚██████╗██║  ██║   ██║   ██║        ██║   ╚██████╔╝   ██║   ███████╗███████╗███████╗███████╗██║  ██║    |
-# |     ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝        ╚═╝    ╚═════╝    ╚═╝   ╚══════╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝    |
-# |                                                                                                            |
-# |                                                                                                            |
-# '------------------------------------------------------------------------------------------------------------'
-
-
 import os
 from dotenv import load_dotenv
 from telebot import TeleBot, types
 import requests
 import time
 import uuid
-import constants
+from constants import (
+    HELP_PAGES, COOLDOWN_TIME_CRYPTO, CURRENCY_PAGES,
+    SUPPORTED_CURRENCIES, CRYPTO_SYMBOLS, CMC_API_KEYS
+)
 from crypto_api import get_crypto_prices, current_api_key_index, get_currency_rate, get_ton_token_info
 import re
 
@@ -53,18 +28,38 @@ def handle_start(message):
     else:
         bot.send_message(message.chat.id, "**Greetings!** I'm [CryptoTeller](https://t.me/crypteller_bot), your friend in the world of cryptocurrencies", parse_mode='Markdown', disable_web_page_preview=True)
 
+def create_help_markup():
+    """Creates the help menu pagination keyboard."""
+    markup = types.InlineKeyboardMarkup()
+    buttons = [
+        types.InlineKeyboardButton(f"{i}️⃣", callback_data=f"help_page_{i}")
+        for i in range(1, 4)
+    ]
+    return markup.row(*buttons)
+
 @bot.message_handler(commands=["help"])
 def handle_help(message):
-    """Displays the help message."""
-    help_text = """
-**Here are my available commands:**
+    """Displays the help message in multiple pages."""
+    markup = create_help_markup()
+    bot.send_message(
+        message.chat.id,
+        HELP_PAGES[1],
+        parse_mode='Markdown',
+        reply_markup=markup
+    )
 
-• **/start** - Starts a conversation with me.
-• **/crypto** - Shows the prices of specific cryptocurrencies.
-• **/help** - Displays this help message.
-• **/api** - **[DEV ONLY]** Shows currently used API key.
-"""
-    bot.send_message(message.chat.id, help_text, parse_mode='Markdown')
+@bot.callback_query_handler(func=lambda call: call.data.startswith("help_page_"))
+def handle_help_pagination(call):
+    """Handles help message pagination."""
+    page_num = int(call.data.split("_")[-1])
+
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=HELP_PAGES[page_num],
+        parse_mode='Markdown',
+        reply_markup=create_help_markup()
+    )
 
 @bot.message_handler(commands=["crypto"])
 def get_crypto_price(message):
@@ -73,10 +68,10 @@ def get_crypto_price(message):
     chat_id = str(message.chat.id)
 
     if message.chat.type in ("group", "supergroup"):
-        if chat_id not in last_used_time or time.time() - last_used_time[chat_id] >= constants.COOLDOWN_TIME_CRYPTO:
+        if chat_id not in last_used_time or time.time() - last_used_time[chat_id] >= COOLDOWN_TIME_CRYPTO:
             try:
                 # Fetch all currencies at once
-                all_currencies = [symbol for page in constants.CURRENCY_PAGES for symbol in page]
+                all_currencies = [symbol for page in CURRENCY_PAGES for symbol in page]
                 cached_crypto_data = get_crypto_prices(all_currencies)
                 last_used_time[chat_id] = time.time()
 
@@ -93,7 +88,7 @@ def get_crypto_price(message):
                 print(e)
                 bot.send_message(chat_id, "Error fetching prices. Please try again.")
         else:
-            remaining_time = constants.COOLDOWN_TIME_CRYPTO - (time.time() - last_used_time[chat_id])
+            remaining_time = COOLDOWN_TIME_CRYPTO - (time.time() - last_used_time[chat_id])
             minutes = int(remaining_time // 60)
             seconds = int(remaining_time % 60)
             cooldown_text = f'*Command on cooldown.* Values will refresh in: *{minutes}* minutes *{seconds}* seconds'
@@ -101,7 +96,7 @@ def get_crypto_price(message):
 
 def get_current_page_data(page):
     """Retrieves data for the specified page."""
-    return {k: cached_crypto_data.get(k) for k in constants.CURRENCY_PAGES[page] if k in cached_crypto_data}
+    return {k: cached_crypto_data.get(k) for k in CURRENCY_PAGES[page] if k in cached_crypto_data}
 
 def format_price_message(data):
     """Formats the cryptocurrency price message."""
@@ -144,7 +139,7 @@ def handle_pagination(call):
     if call.data == "prev_page":
         page = max(0, current_page - 1)
     elif call.data == "next_page":
-        page = min(len(constants.CURRENCY_PAGES) - 1, current_page + 1)
+        page = min(len(CURRENCY_PAGES) - 1, current_page + 1)
     else:
         page = current_page
 
@@ -160,7 +155,7 @@ def get_current_key(message):
         key_names = ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF"]
 
         # Check if current_api_key_index is within the range of available keys
-        if 0 <= current_api_key_index < len(constants.CMC_API_KEYS):
+        if 0 <= current_api_key_index < len(CMC_API_KEYS):
             current_key_name = key_names[current_api_key_index] if current_api_key_index < len(key_names) else f"KEY {current_api_key_index + 1}"
             bot.send_message(message.chat.id, f"*Current API Key:* {current_key_name} (#{current_api_key_index + 1})", parse_mode='Markdown')
         else:
@@ -200,15 +195,15 @@ def handle_inline_query(inline_query):
             amount = float(amount_str) if amount_str else 1.0
 
         # Validate currencies
-        if from_currency not in constants.SUPPORTED_CURRENCIES:
+        if from_currency not in SUPPORTED_CURRENCIES:
             bot.answer_inline_query(inline_query.id, [], switch_pm_text=f"Unsupported currency: {from_currency}")
             return
-        if to_currency not in constants.SUPPORTED_CURRENCIES:
+        if to_currency not in SUPPORTED_CURRENCIES:
             bot.answer_inline_query(inline_query.id, [], switch_pm_text=f"Unsupported currency: {to_currency}")
             return
 
-        is_from_crypto = from_currency in constants.CRYPTO_SYMBOLS
-        is_to_crypto = to_currency in constants.CRYPTO_SYMBOLS
+        is_from_crypto = from_currency in CRYPTO_SYMBOLS
+        is_to_crypto = to_currency in CRYPTO_SYMBOLS
 
         result_text = ""
         error_message = None
