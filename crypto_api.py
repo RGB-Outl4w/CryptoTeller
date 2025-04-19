@@ -27,16 +27,23 @@
 
 
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from constants import CMC_API_KEYS, EXCHANGE_RATE_API_KEYS, DEXSCREENER_API_URL
 
 # Global variables for API key rotation
 current_api_key_index = 0
 current_exchange_rate_api_key_index = 0
 
+# Caching dictionaries and timeouts
+crypto_price_cache = {}
+CRYPTO_CACHE_DURATION = timedelta(minutes=5) # Cache crypto prices for 5 minutes
+
+exchange_rate_cache = {}
+EXCHANGE_RATE_CACHE_DURATION = timedelta(hours=1) # Cache exchange rates for 1 hour
+
 def get_crypto_prices(symbols):
     """
-    Fetches the latest cryptocurrency prices from CoinMarketCap.
+    Fetches the latest cryptocurrency prices from CoinMarketCap, using cache if available.
 
     Args:
         symbols (list): List of cryptocurrency symbols to fetch prices for.
@@ -44,23 +51,66 @@ def get_crypto_prices(symbols):
     Returns:
         dict: A dictionary containing the prices and other details for the requested symbols.
     """
-    global current_api_key_index
-    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
-    params = {"symbol": ",".join(symbols), "convert": "USD"}
-    headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+    global current_api_key_index, crypto_price_cache
+    results = {}
+    symbols_to_fetch = []
+    now = datetime.now(timezone.utc)
 
-    while True:
-        response = requests.get(url, params=params, headers=headers)
-        if response.status_code == 200:
-            break
-        elif response.status_code == 429:
-            switch_api_key()
-            headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+    # Check cache first
+    for symbol in symbols:
+        if symbol in crypto_price_cache:
+            cached_data, timestamp = crypto_price_cache[symbol]
+            if now - timestamp < CRYPTO_CACHE_DURATION:
+                results[symbol] = cached_data
+            else:
+                symbols_to_fetch.append(symbol)
         else:
-            response.raise_for_status()
+            symbols_to_fetch.append(symbol)
 
-    data = response.json()["data"]
-    return {symbol: data[symbol]["quote"]["USD"] for symbol in symbols}
+    # Fetch missing symbols
+    if symbols_to_fetch:
+        url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+        params = {"symbol": ",".join(symbols_to_fetch), "convert": "USD"}
+        headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+
+        while True:
+            try:
+                response = requests.get(url, params=params, headers=headers, timeout=10) # Added timeout
+                response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+                if response.status_code == 200:
+                    data = response.json().get("data", {})
+                    fetch_time = datetime.now(timezone.utc)
+                    for symbol in symbols_to_fetch:
+                        if symbol in data and 'quote' in data[symbol] and 'USD' in data[symbol]['quote']:
+                            price_data = data[symbol]["quote"]["USD"]
+                            results[symbol] = price_data
+                            crypto_price_cache[symbol] = (price_data, fetch_time) # Update cache
+                        else:
+                            # Handle cases where a specific symbol wasn't returned or data is incomplete
+                            print(f"Warning: Data for symbol {symbol} not found or incomplete in API response.")
+                            results[symbol] = None # Indicate data unavailable
+                    break # Exit while loop on success
+
+            except requests.exceptions.HTTPError as http_err:
+                if response.status_code == 429: # Rate limit
+                    print(f"Rate limit hit for CMC API key index {current_api_key_index}. Switching key.")
+                    switch_api_key()
+                    headers = {"X-CMC_PRO_API_KEY": CMC_API_KEYS[current_api_key_index]}
+                    # Continue loop to retry with new key
+                else:
+                    print(f"HTTP error occurred: {http_err} - Status Code: {response.status_code}")
+                    # For other HTTP errors, maybe return partial results or raise
+                    # For now, we break and return what we have (which might be empty)
+                    break
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching crypto prices: {e}")
+                # Handle connection errors, timeouts, etc.
+                # Decide whether to retry, switch key, or just return empty/partial results
+                # For simplicity, break and return potentially partial results
+                break
+
+    return results
 
 def switch_api_key():
     """
@@ -71,34 +121,62 @@ def switch_api_key():
 
 def get_currency_rate(from_currency, to_currency):
     """
-    Fetches the currency conversion rate from ExchangeRate-API.
+    Fetches the currency conversion rate from ExchangeRate-API, using cache if available.
 
     Args:
         from_currency (str): The source currency code.
         to_currency (str): The target currency code.
 
     Returns:
-        float: The conversion rate, or None if an error occurs.
+        float: The conversion rate, or None if an error occurs or rate not found.
     """
-    global current_exchange_rate_api_key_index
+    global current_exchange_rate_api_key_index, exchange_rate_cache
+    cache_key = (from_currency, to_currency)
+    now = datetime.now(timezone.utc)
 
+    # Check cache
+    if cache_key in exchange_rate_cache:
+        rate, timestamp = exchange_rate_cache[cache_key]
+        if now - timestamp < EXCHANGE_RATE_CACHE_DURATION:
+            return rate
+
+    # Fetch from API if not in cache or expired
     while True:
         current_api_key = EXCHANGE_RATE_API_KEYS[current_exchange_rate_api_key_index]
         try:
-            url = f"https://v6.exchangerate-api.com/v6/{current_api_key}/latest/{from_currency}"
-            response = requests.get(url)
+            url = f"https://v6.exchangerate-api.com/v6/{current_api_key}/pair/{from_currency}/{to_currency}"
+            # Using the /pair endpoint is more direct
+            response = requests.get(url, timeout=10) # Added timeout
             response.raise_for_status()
 
             data = response.json()
-            if "result" in data and data["result"] == "success":
-                return float(data['conversion_rates'][to_currency])
+            if data.get("result") == "success":
+                rate = data.get('conversion_rate')
+                if rate is not None:
+                    exchange_rate_cache[cache_key] = (float(rate), datetime.now(timezone.utc)) # Update cache
+                    return float(rate)
+                else:
+                    print(f"Error: 'conversion_rate' not found in ExchangeRate-API response for {from_currency}/{to_currency}. Response: {data}")
+                    return None # Rate not found in successful response
+            elif data.get("error-type") == "invalid-key" or data.get("error-type") == "inactive-account":
+                 print(f"ExchangeRate-API key {current_exchange_rate_api_key_index} is invalid or inactive. Switching key.")
+                 switch_exchange_rate_api_key()
+                 # Continue loop to retry with new key
+            elif data.get("error-type") == "unsupported-code":
+                 print(f"Error: Unsupported currency code used: {from_currency} or {to_currency}")
+                 return None # Unsupported currency
             else:
                 print(f"Error: ExchangeRate-API request failed. Response: {data}")
-                switch_exchange_rate_api_key()
+                # Consider switching key for generic errors too, or just return None
+                # switch_exchange_rate_api_key()
+                return None # Failed for other reasons
 
         except requests.exceptions.RequestException as e:
             print(f"Error fetching exchange rate: {e}")
-            switch_exchange_rate_api_key()
+            # Could be a connection error, timeout, etc.
+            # Decide whether to switch key or just return None
+            # switch_exchange_rate_api_key()
+            return None # Return None on request exception
 
 def switch_exchange_rate_api_key():
     """

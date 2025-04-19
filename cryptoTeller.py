@@ -181,102 +181,123 @@ def share_dev_channel(message):
 def handle_inline_query(inline_query):
     """Handles inline queries for currency and cryptocurrency conversions."""
     try:
-        user_input = inline_query.query.upper()
-        parts = user_input.split()
+        user_input = inline_query.query.strip().upper()
+        # Regex to parse input: optional amount, currency1, optional 'to', currency2
+        match = re.match(r"^(?:(\d*\.?\d+)\s)?([A-Z]{3,5})\s(?:TO\s)?([A-Z]{3,5})$", user_input)
 
-        if len(parts) == 2:  # Expecting two currencies
-            from_currency = parts[0]
-            to_currency = parts[1]
-            amount = 1.0  # Default amount
-
-        elif len(parts) == 3:  # Expecting amount and two currencies
-            # Check if the first element is a number
-            try:
-                amount = float(parts[0])
-                from_currency = parts[1]
-                to_currency = parts[2]
-            except ValueError:
-                # If it's not a number, assume it's a currency
-                from_currency = parts[0]
-                to_currency = parts[1]
+        if not match:
+            # Try parsing just two currencies (amount defaults to 1)
+            match_simple = re.match(r"^([A-Z]{3,5})\s(?:TO\s)?([A-Z]{3,5})$", user_input)
+            if match_simple:
                 amount = 1.0
-
-            if (from_currency in constants.SUPPORTED_CURRENCIES and
-                to_currency in constants.SUPPORTED_CURRENCIES and
-                not (from_currency in ["TON", "BTC", "ETH", "DOGE", "DOGS", "NOT", "SOL", "STON", "GRAM"] or
-                     to_currency in ["TON", "BTC", "ETH", "DOGE", "DOGS", "NOT", "SOL", "STON", "GRAM"])):
-
-                # Both are fiat currencies and NOT crypto, use ExchangeRate-API
-                rate = get_currency_rate(from_currency, to_currency)
-
-                if rate is not None:
-                    converted_amount = amount * rate
-                    result_text = f"💸 {amount:.2f} {from_currency} = 💸 {converted_amount:.2f} {to_currency}"
-
-                    result = types.InlineQueryResultArticle(
-                        id=str(uuid.uuid4()),
-                        title=result_text,
-                        input_message_content=types.InputTextMessageContent(
-                            message_text=result_text,
-                            parse_mode='Markdown'
-                        ),
-                        thumbnail_url="https://i.imgur.com/ubbkPd7.jpeg"
-                    )
-                    bot.answer_inline_query(inline_query.id, [result])
-                else:
-                    bot.answer_inline_query(inline_query.id, [], switch_pm_text="Invalid currency codes.")
-
-            elif (from_currency in constants.SUPPORTED_CURRENCIES or to_currency in constants.SUPPORTED_CURRENCIES):
-                # At least one is crypto, use CoinMarketCap
-
-                try:
-                    # Determine which currency is crypto and which is fiat
-                    if from_currency in ["TON", "BTC", "ETH", "DOGE", "DOGS", "NOT", "SOL", "STON", "GRAM"]:
-                        crypto_symbol = from_currency
-                        fiat_currency = to_currency
-                    else:
-                        crypto_symbol = to_currency
-                        fiat_currency = from_currency
-
-                    crypto_data = get_crypto_prices([crypto_symbol])
-                    crypto_price_usd = crypto_data.get(crypto_symbol, {}).get("price")
-
-                    if crypto_price_usd is not None:
-                        # Get the USD to target fiat currency rate:
-                        usd_to_fiat_rate = get_currency_rate("USD", fiat_currency)
-
-                        if usd_to_fiat_rate is None:
-                            bot.answer_inline_query(inline_query.id, [], switch_pm_text=f"Unable to get exchange rate for USD/{fiat_currency}")
-                        else:
-                            if from_currency == crypto_symbol:  # Convert crypto to fiat
-                                converted_amount = amount * crypto_price_usd * usd_to_fiat_rate
-                                result_text = f"🪙 {amount:.2f} ${from_currency} = 💸 {converted_amount:.2f} {to_currency}"
-                            else:  # Convert fiat to crypto
-                                converted_amount = amount / crypto_price_usd * usd_to_fiat_rate
-                                result_text = f"💸 {amount:.2f} {from_currency} = 🪙 {converted_amount:.2f} ${to_currency}"
-
-                            result = types.InlineQueryResultArticle(
-                                id=str(uuid.uuid4()),
-                                title=result_text,
-                                input_message_content=types.InputTextMessageContent(
-                                    message_text=result_text,
-                                    parse_mode='Markdown'
-                                ),
-                                thumbnail_url="https://i.imgur.com/ubbkPd7.jpeg"
-                            )
-                            bot.answer_inline_query(inline_query.id, [result])
-                    else:
-                        bot.answer_inline_query(inline_query.id, [], switch_pm_text="Cryptocurrency data not found.")
-
-                except Exception as e:
-                    print(f"Error fetching cryptocurrency data: {e}")
-                    bot.answer_inline_query(inline_query.id, [], switch_pm_text="Error fetching cryptocurrency data.")
-
+                from_currency = match_simple.group(1)
+                to_currency = match_simple.group(2)
             else:
-                bot.answer_inline_query(inline_query.id, [], switch_pm_text="At least one currency should be supported.")
-
+                bot.answer_inline_query(inline_query.id, [], switch_pm_text="Invalid format. Use: [amount] CUR1 [to] CUR2")
+                return
         else:
-            bot.answer_inline_query(inline_query.id, [], switch_pm_text="Invalid format. Use: amount currency1 currency2")
+            amount_str, from_currency, to_currency = match.groups()
+            amount = float(amount_str) if amount_str else 1.0
+
+        # Validate currencies
+        if from_currency not in constants.SUPPORTED_CURRENCIES:
+            bot.answer_inline_query(inline_query.id, [], switch_pm_text=f"Unsupported currency: {from_currency}")
+            return
+        if to_currency not in constants.SUPPORTED_CURRENCIES:
+            bot.answer_inline_query(inline_query.id, [], switch_pm_text=f"Unsupported currency: {to_currency}")
+            return
+
+        is_from_crypto = from_currency in constants.CRYPTO_SYMBOLS
+        is_to_crypto = to_currency in constants.CRYPTO_SYMBOLS
+
+        result_text = ""
+        error_message = None
+
+        # Case 1: Fiat to Fiat
+        if not is_from_crypto and not is_to_crypto:
+            rate = get_currency_rate(from_currency, to_currency)
+            if rate is not None:
+                converted_amount = amount * rate
+                result_text = f"💸 {amount:,.2f} {from_currency} = 💸 {converted_amount:,.2f} {to_currency}"
+            else:
+                error_message = f"Could not get rate for {from_currency}/{to_currency}."
+
+        # Case 2: Crypto to Fiat
+        elif is_from_crypto and not is_to_crypto:
+            crypto_data = get_crypto_prices([from_currency])
+            crypto_price_usd_data = crypto_data.get(from_currency)
+
+            if crypto_price_usd_data and 'price' in crypto_price_usd_data:
+                crypto_price_usd = crypto_price_usd_data['price']
+                if to_currency == "USD":
+                    converted_amount = amount * crypto_price_usd
+                    result_text = f"🪙 {amount:,.4f} ${from_currency} = 💸 {converted_amount:,.2f} {to_currency}"
+                else:
+                    usd_to_fiat_rate = get_currency_rate("USD", to_currency)
+                    if usd_to_fiat_rate is not None:
+                        converted_amount = amount * crypto_price_usd * usd_to_fiat_rate
+                        result_text = f"🪙 {amount:,.4f} ${from_currency} = 💸 {converted_amount:,.2f} {to_currency}"
+                    else:
+                        error_message = f"Could not get rate for USD/{to_currency}."
+            else:
+                error_message = f"Could not get price for ${from_currency}."
+
+        # Case 3: Fiat to Crypto
+        elif not is_from_crypto and is_to_crypto:
+            crypto_data = get_crypto_prices([to_currency])
+            crypto_price_usd_data = crypto_data.get(to_currency)
+
+            if crypto_price_usd_data and 'price' in crypto_price_usd_data:
+                crypto_price_usd = crypto_price_usd_data['price']
+                if from_currency == "USD":
+                    converted_amount = amount / crypto_price_usd
+                    result_text = f"💸 {amount:,.2f} {from_currency} = 🪙 {converted_amount:,.6f} ${to_currency}"
+                else:
+                    fiat_to_usd_rate = get_currency_rate(from_currency, "USD")
+                    if fiat_to_usd_rate is not None:
+                        converted_amount = (amount * fiat_to_usd_rate) / crypto_price_usd
+                        result_text = f"💸 {amount:,.2f} {from_currency} = 🪙 {converted_amount:,.6f} ${to_currency}"
+                    else:
+                        error_message = f"Could not get rate for {from_currency}/USD."
+            else:
+                error_message = f"Could not get price for ${to_currency}."
+
+        # Case 4: Crypto to Crypto
+        elif is_from_crypto and is_to_crypto:
+            crypto_data = get_crypto_prices([from_currency, to_currency])
+            from_price_data = crypto_data.get(from_currency)
+            to_price_data = crypto_data.get(to_currency)
+
+            if from_price_data and 'price' in from_price_data and to_price_data and 'price' in to_price_data:
+                from_price_usd = from_price_data['price']
+                to_price_usd = to_price_data['price']
+                if to_price_usd > 0: # Avoid division by zero
+                    converted_amount = amount * (from_price_usd / to_price_usd)
+                    result_text = f"🪙 {amount:,.4f} ${from_currency} = 🪙 {converted_amount:,.6f} ${to_currency}"
+                else:
+                    error_message = f"Price for ${to_currency} is zero."
+            else:
+                missing = []
+                if not (from_price_data and 'price' in from_price_data):
+                    missing.append(from_currency)
+                if not (to_price_data and 'price' in to_price_data):
+                    missing.append(to_currency)
+                error_message = f"Could not get price for ${' and '.join(missing)}."
+
+        # Send result or error
+        if result_text:
+            result = types.InlineQueryResultArticle(
+                id=str(uuid.uuid4()),
+                title=result_text,
+                input_message_content=types.InputTextMessageContent(
+                    message_text=result_text,
+                    parse_mode='Markdown'
+                ),
+                thumbnail_url="https://i.imgur.com/ubbkPd7.jpeg"
+            )
+            bot.answer_inline_query(inline_query.id, [result], cache_time=60) # Cache inline result for 1 min
+        else:
+            bot.answer_inline_query(inline_query.id, [], switch_pm_text=error_message or "Conversion failed.")
 
     except Exception as e:
         print(f"Error in inline query handler: {e}")
