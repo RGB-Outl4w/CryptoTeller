@@ -62,6 +62,13 @@ SUPPORTED_CURRENCIES = [
 # Cryptocurrency symbols
 CRYPTO_SYMBOLS = ["TON", "BTC", "ETH", "DOGE", "DOGS", "NOT", "SOL", "STON", "GRAM", "SUI"]
 
+# Regex for TON contract addresses (adjust as needed)
+# Matches Base64url (EQ/UQ prefix) and the 48-char format
+TON_ADDRESS_REGEX = r"\b(?:(?:EQ|UQ)[A-Za-z0-9_\-]{46}|[A-Za-z0-9]{48})\b"
+
+# DexScreener API endpoint
+DEXSCREENER_API_URL = "https://api.dexscreener.com/latest/dex/search?q={address}"
+
 # Cooldown times for commands (in seconds)
 COOLDOWN_TIME_CRYPTO = 10  # Cooldown for /crypto command
 COOLDOWN_TIME_TOP = 3600   # Cooldown for /top command

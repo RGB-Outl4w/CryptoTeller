@@ -33,7 +33,8 @@ import requests
 import time
 import uuid
 import constants
-from crypto_api import get_crypto_prices, current_api_key_index, get_currency_rate
+from crypto_api import get_crypto_prices, current_api_key_index, get_currency_rate, get_ton_token_info
+import re
 
 # Load environment variables
 load_dotenv()
@@ -283,5 +284,29 @@ def handle_inline_query(inline_query):
         print(f"Error in inline query handler: {e}")
         bot.answer_inline_query(inline_query.id, [], switch_pm_text="An error occurred.")
 
+@bot.message_handler(func=lambda message: True)
+def handle_contract_address(message):
+    """Detects TON contract addresses and fetches token info."""
+    if not message.text:
+        return
+
+    matches = re.findall(constants.TON_ADDRESS_REGEX, message.text)
+    if not matches:
+        return
+
+    # Process only the first found address to avoid spam
+    address = matches[0]
+
+    response_text, error_message = get_ton_token_info(address)
+
+    if response_text:
+        # Send the formatted message
+        bot.reply_to(message, response_text, parse_mode='Markdown', disable_web_page_preview=True)
+    elif error_message:
+        # Notify user about the error
+        bot.reply_to(message, error_message, parse_mode='Markdown')
+
+# Start polling
 if __name__ == "__main__":
-    bot.infinity_polling()
+    print("Bot is running...")
+    bot.polling(none_stop=True)
