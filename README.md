@@ -7,8 +7,8 @@ CryptoTeller is a Telegram bot designed to provide real-time cryptocurrency pric
 - **Real-time Cryptocurrency Prices**: Get the latest prices for popular cryptocurrencies like Bitcoin (BTC), Ethereum (ETH), and more.
 - **Currency Conversion**: Convert between various fiat currencies and cryptocurrencies.
 - **Pagination**: Navigate through multiple pages of cryptocurrency data.
-- **Whitelisting**: Restrict bot usage to specific groups by whitelisting their chat IDs.
 - **API Key Rotation**: Automatically rotate through multiple API keys to avoid rate limits.
+- **(TON) Address Detection**: Automatically detects TON contract addresses in messages and provides token details and a DS link.
 
 ## Commands
 

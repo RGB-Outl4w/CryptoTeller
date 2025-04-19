@@ -57,12 +57,10 @@ def handle_start(message):
 def handle_help(message):
     """Displays the help message."""
     help_text = """
-**Currently I can only provide information about cryptocurrencies, but nobody knows, how far this will get.**
-Here are my available commands:
+**Here are my available commands:**
 
 • **/start** - Starts a conversation with me.
 • **/crypto** - Shows the prices of specific cryptocurrencies.
-
 • **/help** - Displays this help message.
 • **/api** - **[DEV ONLY]** Shows currently used API key.
 """
