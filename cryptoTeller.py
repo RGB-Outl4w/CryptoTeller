@@ -5,8 +5,7 @@ import requests
 import time
 import uuid
 from constants import (
-    HELP_PAGES, COOLDOWN_TIME_CRYPTO, CURRENCY_PAGES,
-    SUPPORTED_CURRENCIES, CRYPTO_SYMBOLS, CMC_API_KEYS
+    HELP_PAGES, COOLDOWN_TIME_CRYPTO, CURRENCY_PAGES, SUPPORTED_CURRENCIES, CRYPTO_SYMBOLS, CMC_API_KEYS, TON_ADDRESS_REGEX
 )
 from crypto_api import get_crypto_prices, current_api_key_index, get_currency_rate, get_ton_token_info
 import re
@@ -304,7 +303,7 @@ def handle_contract_address(message):
     if not message.text:
         return
 
-    matches = re.findall(constants.TON_ADDRESS_REGEX, message.text)
+    matches = re.findall(TON_ADDRESS_REGEX, message.text)
     if not matches:
         return
 
